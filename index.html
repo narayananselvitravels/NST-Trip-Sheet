@@ -2,33 +2,169 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NST Trip Sheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0 auto; padding: 20px; max-width: 800px; background: #f4f6f9; }
-    label { font-weight: bold; margin-top: 10px; display: block; }
-    input, select, textarea, button { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-    button { background: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
-    .trip-card { background: white; border: 1px solid #ccc; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f6f9;
+      margin: 0 auto;
+      padding: 20px;
+      max-width: 850px;
+    }
+    label { font-weight: 600; display: block; margin-top: 12px; }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #4b2aad;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #3b2390; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+    .trip-card {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+    }
     .trip-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .popup, .ratePopup { display: none; position: fixed; top: 5%; left: 50%; transform: translateX(-50%); width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 1000; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #007bff; color: white; }
+
+    .popup, .ratePopup {
+      display: none;
+      position: fixed;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 800px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #4b2aad;
+      color: white;
+    }
+
     #printContent { display: none; }
+
     @media print {
       body * { visibility: hidden; }
       #printContent, #printContent * { visibility: visible; }
       #printContent { position: absolute; top: 0; left: 0; width: 100%; }
     }
-    .invoice { padding: 20px; border: 2px solid #000; margin-bottom: 30px; background: white; page-break-after: always; }
-    .invoice h2 { color: #007bff; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 15px; font-size: 24px; }
-    .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
-    .invoice-table th, .invoice-table td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    .invoice-table th { background: #f0f0f0; }
-    .section-title { font-weight: bold; margin-top: 20px; color: #333; }
+
+    .invoice {
+      background: white;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 10px auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { margin: 0; font-size: 26px; color: #4b2aad; }
+
+    .invoice-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .section { margin-bottom: 18px; }
+    .section h2 {
+      background: #4b2aad;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px 4px 0 0;
+      font-size: 15px;
+    }
+
+    .content {
+      border: 1px solid #4b2aad;
+      padding: 10px;
+      border-radius: 0 0 4px 4px;
+    }
+
+    .two-column {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .col { flex: 1 1 45%; }
+
+    .label { font-weight: 600; margin-top: 6px; }
+
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .invoice-table th, .invoice-table td {
+      border: 1px solid #4b2aad;
+      padding: 6px;
+    }
+
+    .invoice-table th {
+      background: #4b2aad;
+      color: white;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+
+    .notes, .signatures { margin-top: 20px; }
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 25px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .footer span {
+      color: #4b2aad;
+    }
   </style>
 </head>
 <body>
@@ -43,14 +179,14 @@
   <label>Driver Number</label><input id="driverNumber">
   <label>Vehicle Model</label>
   <select id="vehicleModel" onchange="sync(true)">
-    <option value=\"\">-- Select --</option>
+    <option value="">-- Select --</option>
     <option>Innova Crysta</option>
     <option>Innova Hycross</option>
     <option>Force Urbania</option>
   </select>
   <label>Vehicle Number</label>
   <select id="vehicleNo" onchange="sync(false)">
-    <option value=\"\">-- Select --</option>
+    <option value="">-- Select --</option>
     <option>PY05N0505</option>
     <option>PY01DB1007</option>
     <option>TN14AP2084</option>
@@ -82,12 +218,15 @@
   </div>
   <button style="margin-top:15px;" onclick="openRates()">✏️ Edit Rates</button>
 </div>
+
+<!-- View All Trips Popup -->
 <div class="popup" id="tripPopup">
   <h3>📋 All Trips</h3>
   <div id="tripList"></div>
   <button onclick="tripPopup.style.display='none'">Close</button>
 </div>
 
+<!-- Edit Rates Popup -->
 <div class="ratePopup" id="ratePopup">
   <h3>✏️ Edit Vehicle Rates</h3>
   <table>
@@ -98,6 +237,7 @@
   <button onclick="ratePopup.style.display='none'">Cancel</button>
 </div>
 
+<!-- PDF Print Container -->
 <div id="printContent"></div>
 
 <script>
@@ -131,6 +271,7 @@ function sync(fromModel) {
   }
   recalc();
 }
+
 function to12Hr(timeStr) {
   const [h, m] = timeStr.split(":");
   let hour = parseInt(h);
@@ -261,6 +402,7 @@ function editTrip(id) {
   recalc();
   tripPopup.style.display = 'none';
 }
+
 function deleteTrip(id) {
   let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
   arr = arr.filter(t => t.id !== id);
@@ -272,38 +414,7 @@ function shareTrip(id) {
   let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
   let t = arr.find(x => x.id === id);
   if (!t) return;
-  let msg = `📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}
-
-👤 *CUSTOMER INFO*
-*• Name:* ${t.cust}
-*• Number:* ${t.custNum}
-
-👨‍✈️ *DRIVER INFO*
-*• Name:* ${t.driver}
-*• Number:* ${t.driverNum}
-
-🚘 *VEHICLE INFO*
-*• Model:* ${t.model}
-*• Vehicle No:* ${t.no}
-
-🕒 *TIME & DISTANCE*
-*• Start Time:* ${to12Hr(t.start)}
-*• End Time:* ${to12Hr(t.end)}
-*• Duration:* ${t.duration} hrs
-*• Extra Hrs:* ${t.extraHr}
-*• Total KM:* ${t.totalKM} km
-*• Extra KM:* ${t.extraKM} km
-
-💰 *BILLING*
-*• Package:* ₹${t.pkg}
-*• Extra Hrs:* ₹${t.hrCost}
-*• Extra KM:* ₹${t.kmCost}
-*• Toll:* ₹${t.toll}
-*• Parking:* ₹${t.park}
-*• Total:* ₹${t.total}
-
-📝 *Note:* ${t.note || "-"}`;
-
+  let msg = `📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}\n\n👤 *CUSTOMER INFO*\n*• Name:* ${t.cust}\n*• Number:* ${t.custNum}\n\n👨‍✈️ *DRIVER INFO*\n*• Name:* ${t.driver}\n*• Number:* ${t.driverNum}\n\n🚘 *VEHICLE INFO*\n*• Model:* ${t.model}\n*• Vehicle No:* ${t.no}\n\n🕒 *TIME & DISTANCE*\n*• Start Time:* ${to12Hr(t.start)}\n*• End Time:* ${to12Hr(t.end)}\n*• Duration:* ${t.duration} hrs\n*• Extra Hrs:* ${t.extraHr}\n*• Total KM:* ${t.totalKM} km\n*• Extra KM:* ${t.extraKM} km\n\n💰 *BILLING*\n*• Package:* ₹${t.pkg}\n*• Extra Hrs:* ₹${t.hrCost}\n*• Extra KM:* ₹${t.kmCost}\n*• Toll:* ₹${t.toll}\n*• Parking:* ₹${t.park}\n*• Total:* ₹${t.total}\n\n📝 *Note:* ${t.note || "-"}`;
   window.open("https://wa.me/?text=" + encodeURIComponent(msg));
 }
 
@@ -336,51 +447,48 @@ function saveRates() {
 
 function exportPDF() {
   const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  let content = '';
-  trips.forEach(t => {
-    content += `
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4");
+
+  const style = `
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; font-size: 13px; color: #000; margin: 20px; }
+    .section-title { font-weight: bold; font-size: 14px; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #4b2aad; color: white; }
+    .invoice { page-break-after: always; margin-bottom: 20px; }
+  </style>`;
+
+  let content = trips.map(t => `
     <div class="invoice">
-      <h2>NST Travels – Trip Invoice</h2>
-      <div><strong>Trip ID:</strong> ${t.id}</div>
-      <div><strong>Date:</strong> ${formatDate(t.date)}</div>
-      <div class="section-title">Customer Info</div>
-      <div>Name: ${t.cust} | Number: ${t.custNum}</div>
-      <div class="section-title">Driver Info</div>
-      <div>Name: ${t.driver} | Number: ${t.driverNum}</div>
-      <div class="section-title">Vehicle Info</div>
-      <div>Model: ${t.model} | Number: ${t.no}</div>
+      <h2 style="color:#4b2aad;">NST Travels – Trip Invoice</h2>
+      <div><strong>Trip ID:</strong> ${t.id} | <strong>Date:</strong> ${formatDate(t.date)}</div>
+      <div class="section-title">Customer & Driver Info</div>
+      <div>Customer: ${t.cust} (${t.custNum}) | Driver: ${t.driver} (${t.driverNum})</div>
+      <div class="section-title">Vehicle</div>
+      <div>${t.model} - ${t.no}</div>
       <div class="section-title">Time & Distance</div>
-      <table class="invoice-table">
+      <table>
         <tr><th>Start</th><th>End</th><th>Duration</th><th>Extra Hr</th><th>Total KM</th><th>Extra KM</th></tr>
         <tr><td>${to12Hr(t.start)}</td><td>${to12Hr(t.end)}</td><td>${t.duration}</td><td>${t.extraHr}</td><td>${t.totalKM}</td><td>${t.extraKM}</td></tr>
       </table>
       <div class="section-title">Billing</div>
-      <table class="invoice-table">
+      <table>
         <tr><th>Package</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Toll ₹</th><th>Parking ₹</th><th>Total ₹</th></tr>
-        <tr><td>Rs ${t.pkg}</td><td>Rs ${t.hrCost}</td><td>Rs ${t.kmCost}</td><td>Rs ${t.toll}</td><td>Rs ${t.park}</td><td><strong>Rs ${t.total}</strong></td></tr>
+        <tr><td>₹${t.pkg}</td><td>₹${t.hrCost}</td><td>₹${t.kmCost}</td><td>₹${t.toll}</td><td>₹${t.park}</td><td><strong>₹${t.total}</strong></td></tr>
       </table>
       <div class="section-title">Note</div>
       <div>${t.note || "-"}</div>
-    </div>`;
-  });
+    </div>
+  `).join('');
 
   let printWindow = window.open('', '', 'width=800,height=600');
-  printWindow.document.write(`
-    <html><head><title>Trip Invoices</title>
-    <style>
-      body { font-family: 'Segoe UI', sans-serif; background: white; color: #000; }
-      .invoice h2 { color: #007bff; border-bottom: 2px solid #000; margin-bottom: 10px; }
-      .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
-      .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 8px; text-align: left; }
-      .invoice-table th { background: #f0f0f0; }
-      .invoice { margin-bottom: 30px; page-break-after: always; padding: 15px; border: 2px solid #000; }
-      .section-title { font-weight: bold; margin-top: 15px; }
-    </style></head><body>${content}</body></html>`);
+  printWindow.document.write(`<html><head><title>Trip Invoices</title>${style}</head><body>${content}</body></html>`);
   printWindow.document.close();
+  printWindow.focus();
   printWindow.print();
 }
 
-tripId.value = genId();
-</script>
-</body>
-</html>
+t

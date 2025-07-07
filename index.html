@@ -1,402 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NST Trip Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; padding: 20px; max-width: 900px; margin: auto; }
+    h2, h3 { color: #4b2aad; }
+    label { font-weight: 600; margin-top: 10px; display: block; }
+    input, select, textarea, button { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
+    button { background: #4b2aad; color: white; border: none; cursor: pointer; }
+    button:hover { background: #3b1e96; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .trip-card { background: white; border: 1px solid #ccc; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+    .trip-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .popup, .ratePopup { display: none; position: fixed; top: 5%; left: 50%; transform: translateX(-50%); width: 95%; max-width: 900px; max-height: 90vh; overflow-y: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 1000; }
+    canvas { max-width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #4b2aad; color: white; }
+    .signature-pad { border: 1px solid #ccc; height: 150px; margin-bottom: 10px; }
+    .footer { text-align: center; margin-top: 20px; font-style: italic; color: #555; }
+    @media print {
+      body * { visibility: hidden; }
+      #printContent, #printContent * { visibility: visible; }
+      #printContent { position: absolute; top: 0; left: 0; width: 100%; }
+    }
+  </style>
+</head>
 <body>
-<h2>📝 NST Trip Sheet</h2>
-<div id="mainForm">
-  <label>Language</label>
-  <select id="lang" onchange="switchLang()">
-    <option value="en">English</option>
-    <option value="ta">தமிழ்</option>
-    <option value="hi">हिंदी</option>
-  </select>
+  <h2>📝 NST Trip Sheet</h2>
 
-  <label>Trip ID</label><input id="tripId" readonly>
-  <label>Date</label><input type="date" id="tripDate">
-  <label>Customer Name</label><input id="custName">
-  <label>Customer Number</label><input id="custNumber">
-  <label>Driver Name</label><input id="driverName">
-  <label>Driver Number</label><input id="driverNumber">
+  <div id="mainForm">
+    <label>Trip ID</label><input id="tripId" readonly>
+    <label>Date</label><input type="date" id="tripDate">
+    <label>Customer Name</label><input id="custName">
+    <label>Customer Number</label><input id="custNumber">
+    <label>Driver Name</label><input id="driverName">
+    <label>Driver Number</label><input id="driverNumber">
 
-  <label>Vehicle Model</label>
-  <select id="vehicleModel" onchange="sync(true)">
-    <option value="">-- Select --</option>
-    <option>Innova Crysta</option>
-    <option>Innova Hycross</option>
-    <option>Force Urbania</option>
-  </select>
+    <label>Vehicle Model</label>
+    <select id="vehicleModel" onchange="sync(true)">
+      <option value="">-- Select --</option>
+      <option>Innova Crysta</option>
+      <option>Innova Hycross</option>
+      <option>Force Urbania</option>
+    </select>
 
-  <label>Vehicle Number</label>
-  <select id="vehicleNo" onchange="sync(false)">
-    <option value="">-- Select --</option>
-    <option>PY05N0505</option>
-    <option>PY01DB1007</option>
-    <option>TN14AP2084</option>
-  </select>
+    <label>Vehicle Number</label>
+    <select id="vehicleNo" onchange="sync(false)">
+      <option value="">-- Select --</option>
+      <option>PY05N0505</option>
+      <option>PY01DB1007</option>
+      <option>TN14AP2084</option>
+    </select>
 
-  <label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
-  <label>End Time</label><input type="time" id="endTime" onchange="recalc()">
-  <label>Duration (hrs)</label><input id="duration" readonly>
-  <label>Extra Hours</label><input id="extraHours" readonly>
+    <label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
+    <label>End Time</label><input type="time" id="endTime" onchange="recalc()">
+    <label>Duration (hrs)</label><input id="duration" readonly>
+    <label>Extra Hours</label><input id="extraHours" readonly>
+    <label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
+    <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
+    <label>Total KM</label><input id="totalKM" readonly>
+    <label>Extra KM</label><input id="extraKM" readonly>
+    <label>Package ₹</label><input id="packageCost" readonly>
+    <label>Extra Hr ₹</label><input id="extraHrCost" readonly>
+    <label>Extra KM ₹</label><input id="extraKmCost" readonly>
+    <label>Toll ₹</label><input type="number" id="toll" value="0" onchange="recalc()">
+    <label>Parking ₹</label><input type="number" id="parking" value="0" onchange="recalc()">
+    <label>Total ₹</label><input id="totalCost" readonly>
+    <label>Note</label><textarea id="note" rows="3" placeholder="Enter notes..."></textarea>
 
-  <label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
-  <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
-  <label>Total KM</label><input id="totalKM" readonly>
-  <label>Extra KM</label><input id="extraKM" readonly>
+    <label>Customer Signature</label>
+    <canvas id="custSign" class="signature-pad"></canvas>
+    <button type="button" onclick="clearSign('custSign')">Clear</button>
 
-  <label>Package ₹</label><input id="packageCost" readonly>
-  <label>Extra Hr ₹</label><input id="extraHrCost" readonly>
-  <label>Extra KM ₹</label><input id="extraKmCost" readonly>
-  <label>Toll ₹</label><input type="number" id="toll" value="0" onchange="recalc()">
-  <label>Parking ₹</label><input type="number" id="parking" value="0" onchange="recalc()">
-  <label>Total ₹</label><input id="totalCost" readonly>
-  <label>Note</label><textarea id="note" rows="3" placeholder="Enter notes..."></textarea>
+    <label>Driver Signature</label>
+    <canvas id="driverSign" class="signature-pad"></canvas>
+    <button type="button" onclick="clearSign('driverSign')">Clear</button>
 
-  <!-- Signatures -->
-  <label>Customer Signature</label>
-  <canvas id="custSign" width="300" height="80" style="border:1px solid #ccc;"></canvas>
-  <button type="button" onclick="clearSignature('custSign')">Clear Signature</button>
+    <input type="hidden" id="eHr">
+    <input type="hidden" id="eKm">
+    <input type="hidden" id="freeKm">
 
-  <label>Driver Signature</label>
-  <canvas id="driverSign" width="300" height="80" style="border:1px solid #ccc;"></canvas>
-  <button type="button" onclick="clearSignature('driverSign')">Clear Signature</button>
+    <div class="btn-group">
+      <button onclick="saveTrip()">💾 Save</button>
+      <button onclick="showTrips()">📑 View All</button>
+      <button onclick="shareLast()">📤 WhatsApp</button>
+      <button onclick="exportPDF()">📄 Export PDF</button>
+      <button onclick="openDashboard()">📊 Dashboard</button>
+      <button onclick="openCalendar()">📆 Calendar</button>
+    </div>
 
-  <input type="hidden" id="eHr">
-  <input type="hidden" id="eKm">
-  <input type="hidden" id="freeKm">
-
-  <div class="btn-group">
-    <button onclick="saveTrip()">💾 Save</button>
-    <button onclick="showTrips()">📑 View All</button>
-    <button onclick="shareLast()">📤 WhatsApp</button>
-    <button onclick="exportPDF()">📄 Export PDF</button>
-    <button onclick="repeatLast()">🔁 Repeat Trip</button>
+    <button style="margin-top:15px;" onclick="openRates()">✏️ Edit Rates</button>
   </div>
-  <div class="btn-group">
-    <button onclick="openDashboard()">📊 Dashboard</button>
-    <button onclick="openCalendar()">📆 Calendar</button>
-    <button onclick="exportBackup()">💾 Export JSON</button>
-    <button onclick="importBackup()">📥 Import JSON</button>
-    <button onclick="openRates()">✏️ Edit Rates</button>
-  </div>
-</div>
 
-<!-- Add SignaturePad script in <head> -->
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
+  <div class="popup" id="tripPopup">
+    <h3>📋 All Trips</h3>
+    <div id="tripList"></div>
+    <button onclick="tripPopup.style.display='none'">Close</button>
+  </div>
+
+  <div class="ratePopup" id="ratePopup">
+    <h3>✏️ Edit Vehicle Rates</h3>
+    <table>
+      <thead><tr><th>Model</th><th>Package ₹</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Free KM</th></tr></thead>
+      <tbody id="rateRows"></tbody>
+    </table>
+    <button onclick="saveRates()">Save Rates</button>
+    <button onclick="ratePopup.style.display='none'">Cancel</button>
+  </div>
+
+  <div class="popup" id="dashPopup">
+    <h3>📊 Dashboard</h3>
+    <canvas id="chartCanvas" height="300"></canvas>
+    <button onclick="dashPopup.style.display='none'">Close</button>
+  </div>
+
+  <div class="popup" id="calPopup">
+    <h3>📆 Trip Calendar</h3>
+    <div id="calendar"></div>
+    <button onclick="calPopup.style.display='none'">Close</button>
+  </div>
+
+  <div id="printContent"></div>
+  <div class="footer">Thank you for choosing NST Travels. Safe Journey! 🙏</div>
 
 <script>
-let langData = {
-  en: {
-    title: "NST Trip Sheet",
-    customerName: "Customer Name",
-    driverName: "Driver Name",
-    total: "Total ₹",
-    note: "Note"
-  },
-  ta: {
-    title: "NST பயண படிவம்",
-    customerName: "வாடிக்கையாளர் பெயர்",
-    driverName: "ஓட்டுனர் பெயர்",
-    total: "மொத்தம் ₹",
-    note: "குறிப்பு"
-  },
-  hi: {
-    title: "NST यात्रा फ़ॉर्म",
-    customerName: "ग्राहक का नाम",
-    driverName: "चालक का नाम",
-    total: "कुल ₹",
-    note: "टिप्पणी"
-  }
+const RKEY = 'nst-rates', TKEY = 'nst-trips';
+let editingId = null;
+let rates = JSON.parse(localStorage.getItem(RKEY)) || {
+  "Innova Crysta": { pkg: 7500, hr: 1000, km: 20, free: 80, no: "PY05N0505" },
+  "Innova Hycross": { pkg: 8500, hr: 1200, km: 24, free: 60, no: "PY01DB1007" },
+  "Force Urbania": { pkg: 9500, hr: 1500, km: 26, free: 70, no: "TN14AP2084" }
 };
 
-function switchLang() {
-  let lang = langSelect.value || 'en';
-  let l = langData[lang] || langData.en;
-  document.querySelector('h2').textContent = "📝 " + l.title;
-  document.querySelector("label[for=custName]").textContent = l.customerName;
-  document.querySelector("label[for=driverName]").textContent = l.driverName;
-  document.querySelector("label[for=totalCost]").textContent = l.total;
-  document.querySelector("label[for=note]").textContent = l.note;
-}
-
-let custPad = new SignaturePad(document.getElementById("custSign"));
-let driverPad = new SignaturePad(document.getElementById("driverSign"));
-
-function clearSignature(id) {
-  if (id === 'custSign') custPad.clear();
-  if (id === 'driverSign') driverPad.clear();
-}
-
-function getSignatureData() {
-  return {
-    customerSign: custPad.isEmpty() ? "" : custPad.toDataURL(),
-    driverSign: driverPad.isEmpty() ? "" : driverPad.toDataURL()
-  };
-}
-
-function loadSignature(data) {
-  if (data.customerSign) custPad.fromDataURL(data.customerSign);
-  if (data.driverSign) driverPad.fromDataURL(data.driverSign);
-}
-
-function repeatLast() {
-  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  if (arr.length === 0) return;
-  let last = arr[arr.length - 1];
-  editingId = null;
-  tripId.value = genId();
-  tripDate.value = new Date().toISOString().split('T')[0];
-  custName.value = last.cust;
-  custNumber.value = last.custNum;
-  driverName.value = last.driver;
-  driverNumber.value = last.driverNum;
-  vehicleModel.value = last.model;
-  vehicleNo.value = last.no;
-  startTime.value = last.start;
-  endTime.value = last.end;
-  startKM.value = last.startKM;
-  endKM.value = last.endKM;
-  note.value = last.note;
-  sync(true);
+function sync(fromModel) {
+  if (fromModel) {
+    let model = vehicleModel.value;
+    if (rates[model]) {
+      vehicleNo.value = rates[model].no;
+      packageCost.value = rates[model].pkg;
+      eHr.value = rates[model].hr;
+      eKm.value = rates[model].km;
+      freeKm.value = rates[model].free;
+    }
+  } else {
+    let no = vehicleNo.value;
+    for (let model in rates) {
+      if (rates[model].no === no) {
+        vehicleModel.value = model;
+        sync(true);
+        break;
+      }
+    }
+  }
   recalc();
 }
 
-function exportBackup() {
-  const data = localStorage.getItem(TKEY);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "NST_Trip_Backup.json";
-  a.click();
-  URL.revokeObjectURL(url);
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
 }
 
-function importBackup() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "application/json";
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      try {
-        const imported = JSON.parse(event.target.result);
-        if (Array.isArray(imported)) {
-          localStorage.setItem(TKEY, JSON.stringify(imported));
-          alert("Trips imported successfully.");
-        }
-      } catch (e) {
-        alert("Invalid JSON file.");
-      }
-    };
-    reader.readAsText(file);
+function to12Hr(timeStr) {
+  const [h, m] = timeStr.split(":");
+  let hour = parseInt(h);
+  let suffix = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${m} ${suffix}`;
+}
+
+function recalc() {
+  if (startTime.value && endTime.value) {
+    let s = new Date(`1970-01-01T${startTime.value}`);
+    let e = new Date(`1970-01-01T${endTime.value}`);
+    let diff = (e - s) / 3600000;
+    if (diff < 0) diff += 24;
+    let hrs = Math.ceil(diff);
+    duration.value = hrs;
+    extraHours.value = hrs > 8 ? hrs - 8 : 0;
+  }
+
+  let totKm = endKM.value - startKM.value;
+  totalKM.value = totKm;
+  extraKM.value = totKm > freeKm.value ? totKm - freeKm.value : 0;
+
+  extraHrCost.value = (extraHours.value || 0) * eHr.value;
+  extraKmCost.value = (extraKM.value || 0) * eKm.value;
+  totalCost.value = (+packageCost.value || 0) + (+extraHrCost.value || 0) + (+extraKmCost.value || 0) + (+toll.value || 0) + (+parking.value || 0);
+}
+
+function genId() {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  for (let i = 1; i <= 999; i++) {
+    let id = "#NST" + String(i).padStart(3, '0');
+    if (!arr.find(t => t.id === id)) return id;
+  }
+  return "#NST999";
+}
+
+function saveTrip() {
+  const custSign = document.getElementById('custSign').toDataURL();
+  const driverSign = document.getElementById('driverSign').toDataURL();
+  let trip = {
+    id: tripId.value || genId(),
+    date: tripDate.value,
+    note: note.value,
+    cust: custName.value,
+    custNum: custNumber.value,
+    driver: driverName.value,
+    driverNum: driverNumber.value,
+    model: vehicleModel.value,
+    no: vehicleNo.value,
+    start: startTime.value,
+    end: endTime.value,
+    duration: duration.value,
+    extraHr: extraHours.value,
+    startKM: startKM.value,
+    endKM: endKM.value,
+    totalKM: totalKM.value,
+    extraKM: extraKM.value,
+    pkg: packageCost.value,
+    hrCost: extraHrCost.value,
+    kmCost: extraKmCost.value,
+    toll: toll.value,
+    park: parking.value,
+    total: totalCost.value,
+    custSign, driverSign
   };
-  input.click();
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  if (editingId) {
+    let i = arr.findIndex(t => t.id === editingId);
+    if (i >= 0) arr[i] = trip;
+    editingId = null;
+  } else {
+    arr.push(trip);
+  }
+  localStorage.setItem(TKEY, JSON.stringify(arr));
+  clearForm();
+  alert("✅ Trip saved!");
 }
 
-function openDashboard() {
-  alert("📊 Dashboard feature coming in Part 3");
+function clearForm() {
+  document.querySelectorAll('#mainForm input, #mainForm select, #mainForm textarea').forEach(el => el.value = '');
+  tripId.value = genId();
+  custPad.clear(); driverPad.clear();
 }
 
-function openCalendar() {
-  alert("📆 Calendar view coming in Part 4");
-}
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<div class="popup" id="dashboardPopup">
-  <h3>📊 Trip Dashboard</h3>
-  <div id="dashboardSummary"></div>
-  <canvas id="tripChart" width="100%" height="200"></canvas>
-  <canvas id="modelChart" width="100%" height="200"></canvas>
-  <button onclick="dashboardPopup.style.display='none'">Close</button>
-</div>
-
-function openDashboard() {
-  const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  const summary = {
-    totalTrips: trips.length,
-    totalRevenue: 0,
-    models: {}
-  };
-
-  trips.forEach(t => {
-    summary.totalRevenue += Number(t.total || 0);
-    summary.models[t.model] = (summary.models[t.model] || 0) + 1;
-  });
-
-  // HTML Summary
-  dashboardSummary.innerHTML = `
-    <p><b>Total Trips:</b> ${summary.totalTrips}</p>
-    <p><b>Total Revenue:</b> ₹${summary.totalRevenue.toLocaleString()}</p>
-  `;
-
-  // Destroy old charts if any
-  if (window.tripChartObj) window.tripChartObj.destroy();
-  if (window.modelChartObj) window.modelChartObj.destroy();
-
-  // Revenue by Trip Chart (Bar)
-  window.tripChartObj = new Chart(tripChart, {
-    type: 'bar',
-    data: {
-      labels: trips.map(t => t.id),
-      datasets: [{
-        label: 'Trip Revenue ₹',
-        data: trips.map(t => Number(t.total || 0)),
-        backgroundColor: '#4b2aad'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      }
-    }
-  });
-
-  // Model Usage Pie Chart
-  const models = Object.keys(summary.models);
-  window.modelChartObj = new Chart(modelChart, {
-    type: 'pie',
-    data: {
-      labels: models,
-      datasets: [{
-        data: models.map(m => summary.models[m]),
-        backgroundColor: ['#4b2aad', '#007bff', '#ff9800']
-      }]
-    },
-    options: {
-      responsive: true
-    }
-  });
-
-  dashboardPopup.style.display = 'block';
+function clearSign(id) {
+  const canvas = document.getElementById(id);
+  new SignaturePad(canvas).clear();
 }
 
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-
-<div class="popup" id="calendarPopup">
-  <h3>📆 Trip Calendar</h3>
-  <div id="calendarView"></div>
-  <button onclick="calendarPopup.style.display='none'">Close</button>
-</div>
-
-function openCalendar() {
-  const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  const events = trips.map(t => ({
-    title: t.id + " – " + t.model,
-    start: t.date,
-    id: t.id
-  }));
-
-  if (window.fullCalendarObj) window.fullCalendarObj.destroy();
-
-  const calendarEl = document.getElementById("calendarView");
-  window.fullCalendarObj = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    height: 500,
-    events,
-    eventClick: function(info) {
-      editTrip(info.event.id);
-      calendarPopup.style.display = 'none';
-    }
-  });
-
-  window.fullCalendarObj.render();
-  calendarPopup.style.display = 'block';
+function shareLast() {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  if (arr.length) shareTrip(arr[arr.length - 1].id);
 }
 
-<input type="text" id="tripSearch" placeholder="🔍 Search trips..." oninput="searchTrips()">
+function shareTrip(id) {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  let t = arr.find(x => x.id === id);
+  if (!t) return;
+  let msg = `📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}
+
+👤 *CUSTOMER*
+Name: ${t.cust}
+Number: ${t.custNum}
+
+👨‍✈️ *DRIVER*
+Name: ${t.driver}
+Number: ${t.driverNum}
+
+🚘 *VEHICLE*
+${t.model} - ${t.no}
+
+🕒 *TIME*
+${to12Hr(t.start)} → ${to12Hr(t.end)} (${t.duration}h)
+
+📏 *DISTANCE*
+KM: ${t.totalKM} | Extra: ${t.extraKM}
+
+💰 *BILL*
+Package: ₹${t.pkg}
+Extra Hr: ₹${t.hrCost}
+Extra KM: ₹${t.kmCost}
+Toll: ₹${t.toll} | Parking: ₹${t.park}
+Total: ₹${t.total}
+
+📝 Note: ${t.note || "-"}`;
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg));
+}
 
 function showTrips() {
-  const all = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  window.tripSearchData = all;
-  renderTripList(all);
-  tripPopup.style.display = 'block';
-}
-function renderTripList(list) {
-  tripList.innerHTML = list.map(t => `
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  tripList.innerHTML = arr.map(t => `
     <div class="trip-card">
       <b>${t.id}</b> (${formatDate(t.date)})<br>
       ${t.model} - ${t.no}<br>
       ${to12Hr(t.start)} → ${to12Hr(t.end)} (${t.duration}h)<br>
-      Extra Hr: ${t.extraHr} | Extra KM: ${t.extraKM}<br>
-      Toll: ₹${t.toll} | Parking: ₹${t.park}<br>
-      <b>Total: ₹${t.total}</b>
+      Toll: ₹${t.toll} | Parking: ₹${t.park} | <b>Total: ₹${t.total}</b>
       <div class="trip-actions">
         <button onclick="editTrip('${t.id}')">✏️ Edit</button>
         <button onclick="deleteTrip('${t.id}')">❌ Delete</button>
         <button onclick="shareTrip('${t.id}')">📤 Share</button>
       </div>
     </div>
-  `).join('') || 'No trips found';
+  `).join('') || 'No trips found.';
+  tripPopup.style.display = 'block';
 }
 
-function searchTrips() {
-  const q = tripSearch.value.toLowerCase();
-  const result = (window.tripSearchData || []).filter(t =>
-    t.id.toLowerCase().includes(q) ||
-    t.cust.toLowerCase().includes(q) ||
-    t.driver.toLowerCase().includes(q) ||
-    t.model.toLowerCase().includes(q) ||
-    formatDate(t.date).includes(q)
-  );
-  renderTripList(result);
+function editTrip(id) {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  let t = arr.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  Object.entries(t).forEach(([k,v]) => {
+    if (document.getElementById(k)) document.getElementById(k).value = v;
+  });
+  sync(true);
+  recalc();
+  tripPopup.style.display = 'none';
 }
-function exportPDF() {
-  const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  trips.forEach(t => {
-    let content = `
-    <div class="invoice">
-      <h2>NST Travels – Trip Invoice</h2>
-      <div><strong>Trip ID:</strong> ${t.id}</div>
-      <div><strong>Date:</strong> ${formatDate(t.date)}</div>
-      <div class="section-title">Customer Info</div>
-      <div>Name: ${t.cust} | Number: ${t.custNum}</div>
-      <div class="section-title">Driver Info</div>
-      <div>Name: ${t.driver} | Number: ${t.driverNum}</div>
-      <div class="section-title">Vehicle Info</div>
-      <div>Model: ${t.model} | Number: ${t.no}</div>
-      <div class="section-title">Time & Distance</div>
-      <table class="invoice-table">
-        <tr><th>Start</th><th>End</th><th>Duration</th><th>Extra Hr</th><th>Total KM</th><th>Extra KM</th></tr>
-        <tr><td>${to12Hr(t.start)}</td><td>${to12Hr(t.end)}</td><td>${t.duration}</td><td>${t.extraHr}</td><td>${t.totalKM}</td><td>${t.extraKM}</td></tr>
-      </table>
-      <div class="section-title">Billing</div>
-      <table class="invoice-table">
-        <tr><th>Package</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Toll ₹</th><th>Parking ₹</th><th>Total ₹</th></tr>
-        <tr><td>₹${t.pkg}</td><td>₹${t.hrCost}</td><td>₹${t.kmCost}</td><td>₹${t.toll}</td><td>₹${t.park}</td><td><strong>₹${t.total}</strong></td></tr>
-      </table>
-      <div class="section-title">Note</div>
-      <div>${t.note || "-"}</div>
-      <br>
-      <div><b>Customer Signature:</b><br><img src="${t.customerSign || ''}" style="max-width:300px; height:auto; border:1px solid #000;"/></div>
-      <div><b>Driver Signature:</b><br><img src="${t.driverSign || ''}" style="max-width:300px; height:auto; border:1px solid #000;"/></div>
-      <br><center><i>🙏 Thank you for choosing NST Travels</i></center>
-    </div>`;
 
-    let printWindow = window.open('', '', 'width=800,height=600');
-    printWindow.document.write(`<html><head><title>${t.id}</title>
-    <style>
-      body { font-family: 'Segoe UI'; background: white; color: #000; padding: 20px; }
-      .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
-      .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 8px; text-align: left; }
-      .invoice-table th { background: #f0f0f0; }
-      .invoice { margin-bottom: 30px; page-break-after: always; padding: 15px; border: 2px solid #000; }
-      .section-title { font-weight: bold; margin-top: 15px; }
-    </style></head><body>${content}</body></html>`);
-    printWindow.document.close();
+function deleteTrip(id) {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  arr = arr.filter(t => t.id !== id);
+  localStorage.setItem(TKEY, JSON.stringify(arr));
+  showTrips();
+}
 
-    // Auto-download on open (optional):
-    printWindow.print();
+function openRates() {
+  rateRows.innerHTML = '';
+  for (let m in rates) {
+    let r = rates[m];
+    rateRows.innerHTML += `
+      <tr>
+        <td>${m}</td>
+        <td><input type="number" value="${r.pkg}" onchange="rates['${m}'].pkg=this.value"></td>
+        <td><input type="number" value="${r.hr}" onchange="rates['${m}'].hr=this.value"></td>
+        <td><input type="number" value="${r.km}" onchange="rates['${m}'].km=this.value"></td>
+        <td><input type="number" value="${r.free}" onchange="rates['${m}'].free=this.value"></td>
+      </tr>`;
+  }
+  ratePopup.style.display = 'block';
+}
+
+function saveRates() {
+  localStorage.setItem(RKEY, JSON.stringify(rates));
+  ratePopup.style.display = 'none';
+  sync(true);
+}
+
+function openDashboard() {
+  dashPopup.style.display = 'block';
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  let labels = arr.map(t => t.id);
+  let totals = arr.map(t => parseFloat(t.total || 0));
+  new Chart(document.getElementById("chartCanvas"), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: "Trip Total ₹",
+        data: totals,
+        backgroundColor: '#4b2aad'
+      }]
+    }
   });
 }
 
-let signs = getSignatureData();
+function openCalendar() {
+  calPopup.style.display = 'block';
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  let events = arr.map(t => ({ title: t.id, start: t.date }));
+  new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'dayGridMonth',
+    events
+  }).render();
+}
 
-let trip = {
-  id: tripId.value || genId(),
-  ...
-  ...signs
-};
+const custPad = new SignaturePad(document.getElementById('custSign'));
+const driverPad = new SignaturePad(document.getElementById('driverSign'));
+tripId.value = genId();
+</script>
+</body>
+</html>
+

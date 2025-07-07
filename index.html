@@ -588,22 +588,44 @@
   }
 
   // Share trip on WhatsApp
-  function shareTrip(id){
-    let trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
-    let t = trips.find(x=>x.id === id);
-    if(!t) return alert("Trip not found!");
-    let msg=`📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}\n\n`+
-            `👤 *CUSTOMER INFO*\n• Name: ${t.cust}\n• Number: ${t.custNum}\n\n`+
-            `👨‍✈️ *DRIVER INFO*\n• Name: ${t.driver}\n• Number: ${t.driverNum}\n\n`+
-            `🚘 *VEHICLE INFO*\n• Model: ${t.model}\n• Vehicle No: ${t.no}\n\n`+
-            `🕒 *TIME & DISTANCE*\n• Start Time: ${to12Hr(t.start)}\n• End Time: ${to12Hr(t.end)}\n`+
-            `• Duration: ${t.duration} hrs\n• Extra Hrs: ${t.extraHr}\n• Total KM: ${t.totalKM} km\n• Extra KM: ${t.extraKM} km\n\n`+
-            `💰 *BILLING*\n• Package: ₹${t.pkg}\n• Extra Hrs: ₹${t.hrCost}\n• Extra KM: ₹${t.kmCost}\n`+
-            `• Toll: ₹${t.toll}\n• Parking: ₹${t.park}\n• Total: ₹${t.total}\n\n`+
-            `📝 *Note:* ${t.note||"-"}`;
-    window.open("https://wa.me/?text="+encodeURIComponent(msg));
-  }
+function shareTrip(id) {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  let t = arr.find(x => x.id === id);
+  if (!t) return;
+  let msg = 📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}
 
+👤 *CUSTOMER INFO*
+*• Name:* ${t.cust}
+*• Number:* ${t.custNum}
+
+👨‍✈️ *DRIVER INFO*
+*• Name:* ${t.driver}
+*• Number:* ${t.driverNum}
+
+🚘 *VEHICLE INFO*
+*• Model:* ${t.model}
+*• Vehicle No:* ${t.no}
+
+🕒 *TIME & DISTANCE*
+*• Start Time:* ${to12Hr(t.start)}
+*• End Time:* ${to12Hr(t.end)}
+*• Duration:* ${t.duration} hrs
+*• Extra Hrs:* ${t.extraHr}
+*• Total KM:* ${t.totalKM} km
+*• Extra KM:* ${t.extraKM} km
+
+💰 *BILLING*
+*• Package:* ₹${t.pkg}
+*• Extra Hrs:* ₹${t.hrCost}
+*• Extra KM:* ₹${t.kmCost}
+*• Toll:* ₹${t.toll}
+*• Parking:* ₹${t.park}
+*• Total:* ₹${t.total}
+
+📝 *Note:* ${t.note || "-"};
+
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg));
+}
   // Share last saved trip on WhatsApp
   function shareLast(){
     let trips = JSON.parse(localStorage.getItem(TKEY) || '[]');

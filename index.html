@@ -588,7 +588,7 @@
   }
 
   // Share trip on WhatsApp
-function shareTrip(id){
+  function shareTrip(id){
   let trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
   let t = trips.find(x => x.id === id);
   if (!t) return alert("Trip not found!");
@@ -634,6 +634,12 @@ function shareTrip(id){
   window.open(whatsappURL);
 }
 
+  // Share last saved trip on WhatsApp
+  function shareLast(){
+    let trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
+    if(trips.length) shareTrip(trips[trips.length-1].id);
+    else alert("No trips saved yet!");
+  }
 
   // Rate editing popup
   function openRates(){

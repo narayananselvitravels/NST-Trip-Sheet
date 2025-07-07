@@ -588,50 +588,52 @@
   }
 
   // Share trip on WhatsApp
-function shareTrip(id) {
-  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  let t = arr.find(x => x.id === id);
-  if (!t) return;
-  let msg = 📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}
+function shareTrip(id){
+  let trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  let t = trips.find(x => x.id === id);
+  if (!t) return alert("Trip not found!");
+  
+  const msg = `
+📋 *TRIP SUMMARY*
+*Trip ID:* ${t.id}
+*Date:* ${formatDate(t.date)}
 
-👤 *CUSTOMER INFO*
-*• Name:* ${t.cust}
-*• Number:* ${t.custNum}
+👤 *Customer Info*
+• Name: ${t.cust}
+• Number: ${t.custNum}
 
-👨‍✈️ *DRIVER INFO*
-*• Name:* ${t.driver}
-*• Number:* ${t.driverNum}
+👨‍✈️ *Driver Info*
+• Name: ${t.driver}
+• Number: ${t.driverNum}
 
-🚘 *VEHICLE INFO*
-*• Model:* ${t.model}
-*• Vehicle No:* ${t.no}
+🚘 *Vehicle Info*
+• Model: ${t.model}
+• Number: ${t.no}
 
-🕒 *TIME & DISTANCE*
-*• Start Time:* ${to12Hr(t.start)}
-*• End Time:* ${to12Hr(t.end)}
-*• Duration:* ${t.duration} hrs
-*• Extra Hrs:* ${t.extraHr}
-*• Total KM:* ${t.totalKM} km
-*• Extra KM:* ${t.extraKM} km
+🕒 *Time & Distance*
+• Start Time: ${to12Hr(t.start)}
+• End Time: ${to12Hr(t.end)}
+• Duration: ${t.duration} hrs
+• Extra Hours: ${t.extraHr}
+• Total KM: ${t.totalKM} km
+• Extra KM: ${t.extraKM} km
 
-💰 *BILLING*
-*• Package:* ₹${t.pkg}
-*• Extra Hrs:* ₹${t.hrCost}
-*• Extra KM:* ₹${t.kmCost}
-*• Toll:* ₹${t.toll}
-*• Parking:* ₹${t.park}
-*• Total:* ₹${t.total}
+💰 *Billing*
+• Package: ₹${t.pkg}
+• Extra Hr: ₹${t.hrCost}
+• Extra KM: ₹${t.kmCost}
+• Toll: ₹${t.toll}
+• Parking: ₹${t.park}
+• Total: ₹${t.total}
 
-📝 *Note:* ${t.note || "-"};
+📝 *Note:* ${t.note || '-'}
 
-  window.open("https://wa.me/?text=" + encodeURIComponent(msg));
+🙏 Thank you for choosing *NST Travels*`;
+
+  const whatsappURL = "https://wa.me/?text=" + encodeURIComponent(msg.trim());
+  window.open(whatsappURL);
 }
-  // Share last saved trip on WhatsApp
-  function shareLast(){
-    let trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
-    if(trips.length) shareTrip(trips[trips.length-1].id);
-    else alert("No trips saved yet!");
-  }
+
 
   // Rate editing popup
   function openRates(){

@@ -82,7 +82,6 @@
   </div>
   <button style="margin-top:15px;" onclick="openRates()">✏️ Edit Rates</button>
 </div>
-
 <div class="popup" id="tripPopup">
   <h3>📋 All Trips</h3>
   <div id="tripList"></div>
@@ -132,7 +131,6 @@ function sync(fromModel) {
   }
   recalc();
 }
-
 function to12Hr(timeStr) {
   const [h, m] = timeStr.split(":");
   let hour = parseInt(h);
@@ -263,7 +261,6 @@ function editTrip(id) {
   recalc();
   tripPopup.style.display = 'none';
 }
-
 function deleteTrip(id) {
   let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
   arr = arr.filter(t => t.id !== id);

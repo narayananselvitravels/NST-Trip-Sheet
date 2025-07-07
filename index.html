@@ -201,3 +201,202 @@ function openCalendar() {
   alert("📆 Calendar view coming in Part 4");
 }
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="popup" id="dashboardPopup">
+  <h3>📊 Trip Dashboard</h3>
+  <div id="dashboardSummary"></div>
+  <canvas id="tripChart" width="100%" height="200"></canvas>
+  <canvas id="modelChart" width="100%" height="200"></canvas>
+  <button onclick="dashboardPopup.style.display='none'">Close</button>
+</div>
+
+function openDashboard() {
+  const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  const summary = {
+    totalTrips: trips.length,
+    totalRevenue: 0,
+    models: {}
+  };
+
+  trips.forEach(t => {
+    summary.totalRevenue += Number(t.total || 0);
+    summary.models[t.model] = (summary.models[t.model] || 0) + 1;
+  });
+
+  // HTML Summary
+  dashboardSummary.innerHTML = `
+    <p><b>Total Trips:</b> ${summary.totalTrips}</p>
+    <p><b>Total Revenue:</b> ₹${summary.totalRevenue.toLocaleString()}</p>
+  `;
+
+  // Destroy old charts if any
+  if (window.tripChartObj) window.tripChartObj.destroy();
+  if (window.modelChartObj) window.modelChartObj.destroy();
+
+  // Revenue by Trip Chart (Bar)
+  window.tripChartObj = new Chart(tripChart, {
+    type: 'bar',
+    data: {
+      labels: trips.map(t => t.id),
+      datasets: [{
+        label: 'Trip Revenue ₹',
+        data: trips.map(t => Number(t.total || 0)),
+        backgroundColor: '#4b2aad'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+
+  // Model Usage Pie Chart
+  const models = Object.keys(summary.models);
+  window.modelChartObj = new Chart(modelChart, {
+    type: 'pie',
+    data: {
+      labels: models,
+      datasets: [{
+        data: models.map(m => summary.models[m]),
+        backgroundColor: ['#4b2aad', '#007bff', '#ff9800']
+      }]
+    },
+    options: {
+      responsive: true
+    }
+  });
+
+  dashboardPopup.style.display = 'block';
+}
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<div class="popup" id="calendarPopup">
+  <h3>📆 Trip Calendar</h3>
+  <div id="calendarView"></div>
+  <button onclick="calendarPopup.style.display='none'">Close</button>
+</div>
+
+function openCalendar() {
+  const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  const events = trips.map(t => ({
+    title: t.id + " – " + t.model,
+    start: t.date,
+    id: t.id
+  }));
+
+  if (window.fullCalendarObj) window.fullCalendarObj.destroy();
+
+  const calendarEl = document.getElementById("calendarView");
+  window.fullCalendarObj = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 500,
+    events,
+    eventClick: function(info) {
+      editTrip(info.event.id);
+      calendarPopup.style.display = 'none';
+    }
+  });
+
+  window.fullCalendarObj.render();
+  calendarPopup.style.display = 'block';
+}
+
+<input type="text" id="tripSearch" placeholder="🔍 Search trips..." oninput="searchTrips()">
+
+function showTrips() {
+  const all = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  window.tripSearchData = all;
+  renderTripList(all);
+  tripPopup.style.display = 'block';
+}
+function renderTripList(list) {
+  tripList.innerHTML = list.map(t => `
+    <div class="trip-card">
+      <b>${t.id}</b> (${formatDate(t.date)})<br>
+      ${t.model} - ${t.no}<br>
+      ${to12Hr(t.start)} → ${to12Hr(t.end)} (${t.duration}h)<br>
+      Extra Hr: ${t.extraHr} | Extra KM: ${t.extraKM}<br>
+      Toll: ₹${t.toll} | Parking: ₹${t.park}<br>
+      <b>Total: ₹${t.total}</b>
+      <div class="trip-actions">
+        <button onclick="editTrip('${t.id}')">✏️ Edit</button>
+        <button onclick="deleteTrip('${t.id}')">❌ Delete</button>
+        <button onclick="shareTrip('${t.id}')">📤 Share</button>
+      </div>
+    </div>
+  `).join('') || 'No trips found';
+}
+
+function searchTrips() {
+  const q = tripSearch.value.toLowerCase();
+  const result = (window.tripSearchData || []).filter(t =>
+    t.id.toLowerCase().includes(q) ||
+    t.cust.toLowerCase().includes(q) ||
+    t.driver.toLowerCase().includes(q) ||
+    t.model.toLowerCase().includes(q) ||
+    formatDate(t.date).includes(q)
+  );
+  renderTripList(result);
+}
+function exportPDF() {
+  const trips = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  trips.forEach(t => {
+    let content = `
+    <div class="invoice">
+      <h2>NST Travels – Trip Invoice</h2>
+      <div><strong>Trip ID:</strong> ${t.id}</div>
+      <div><strong>Date:</strong> ${formatDate(t.date)}</div>
+      <div class="section-title">Customer Info</div>
+      <div>Name: ${t.cust} | Number: ${t.custNum}</div>
+      <div class="section-title">Driver Info</div>
+      <div>Name: ${t.driver} | Number: ${t.driverNum}</div>
+      <div class="section-title">Vehicle Info</div>
+      <div>Model: ${t.model} | Number: ${t.no}</div>
+      <div class="section-title">Time & Distance</div>
+      <table class="invoice-table">
+        <tr><th>Start</th><th>End</th><th>Duration</th><th>Extra Hr</th><th>Total KM</th><th>Extra KM</th></tr>
+        <tr><td>${to12Hr(t.start)}</td><td>${to12Hr(t.end)}</td><td>${t.duration}</td><td>${t.extraHr}</td><td>${t.totalKM}</td><td>${t.extraKM}</td></tr>
+      </table>
+      <div class="section-title">Billing</div>
+      <table class="invoice-table">
+        <tr><th>Package</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Toll ₹</th><th>Parking ₹</th><th>Total ₹</th></tr>
+        <tr><td>₹${t.pkg}</td><td>₹${t.hrCost}</td><td>₹${t.kmCost}</td><td>₹${t.toll}</td><td>₹${t.park}</td><td><strong>₹${t.total}</strong></td></tr>
+      </table>
+      <div class="section-title">Note</div>
+      <div>${t.note || "-"}</div>
+      <br>
+      <div><b>Customer Signature:</b><br><img src="${t.customerSign || ''}" style="max-width:300px; height:auto; border:1px solid #000;"/></div>
+      <div><b>Driver Signature:</b><br><img src="${t.driverSign || ''}" style="max-width:300px; height:auto; border:1px solid #000;"/></div>
+      <br><center><i>🙏 Thank you for choosing NST Travels</i></center>
+    </div>`;
+
+    let printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(`<html><head><title>${t.id}</title>
+    <style>
+      body { font-family: 'Segoe UI'; background: white; color: #000; padding: 20px; }
+      .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
+      .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+      .invoice-table th { background: #f0f0f0; }
+      .invoice { margin-bottom: 30px; page-break-after: always; padding: 15px; border: 2px solid #000; }
+      .section-title { font-weight: bold; margin-top: 15px; }
+    </style></head><body>${content}</body></html>`);
+    printWindow.document.close();
+
+    // Auto-download on open (optional):
+    printWindow.print();
+  });
+}
+
+let signs = getSignatureData();
+
+let trip = {
+  id: tripId.value || genId(),
+  ...
+  ...signs
+};

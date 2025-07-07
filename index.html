@@ -4,108 +4,182 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NST Trip Sheet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Poppins', sans-serif; margin: 0 auto; padding: 20px; max-width: 800px; background: #f4f6f9; }
-    label { font-weight: 600; margin-top: 10px; display: block; }
-    input, select, textarea, button {
-      width: 100%; padding: 10px; margin: 5px 0 15px 0;
-      border: 1px solid #ccc; border-radius: 5px; font-size: 15px;
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      margin: 0 auto;
+      padding: 20px;
+      max-width: 800px;
+      background: #f4f6f9;
     }
-    button { background: #4b2aad; color: white; border: none; cursor: pointer; }
-    button:hover { background: #36208c; }
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
-    .trip-card { background: white; border: 1px solid #ccc; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
-    .trip-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    h2 { color: #4b2aad; margin-bottom: 15px; }
+    label { font-weight: 600; display: block; margin: 8px 0 4px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    input[readonly] {
+      background: #f1f1f1;
+    }
+    button {
+      background: #4b2aad;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #362087;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
     .popup, .ratePopup {
-      display: none; position: fixed; top: 5%; left: 50%; transform: translateX(-50%);
-      width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;
-      background: white; padding: 20px; border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 1000;
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #4b2aad; color: white; }
-    #printContent { display: none; }
-    @media print {
-      body * { visibility: hidden; }
-      #printContent, #printContent * { visibility: visible; }
-      #printContent { position: absolute; top: 0; left: 0; width: 100%; }
+    .popup > div, .ratePopup > div {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .trip-card {
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .trip-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #4b2aad;
+      color: white;
+    }
+    .section-title {
+      margin: 15px 0 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    @media screen and (max-width: 600px) {
+      .btn-group {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-<h2>📝 NST Trip Sheet</h2>
+  <h2>📝 NST Trip Sheet</h2>
+  <div id="mainForm">
+    <label>Trip ID</label><input id="tripId" readonly>
+    <label>Date</label><input type="date" id="tripDate" value="" required>
+    <label>Customer Name</label><input id="custName" required>
+    <label>Customer Number</label><input id="custNumber" required>
+    <label>Driver Name</label><input id="driverName" required>
+    <label>Driver Number</label><input id="driverNumber" required>
+    <label>Vehicle Model</label>
+    <select id="vehicleModel" onchange="sync(true)" required>
+      <option value="">-- Select --</option>
+      <option>Innova Crysta</option>
+      <option>Innova Hycross</option>
+      <option>Force Urbania</option>
+    </select>
+    <label>Vehicle Number</label>
+    <select id="vehicleNo" onchange="sync(false)" required>
+      <option value="">-- Select --</option>
+      <option>PY05N0505</option>
+      <option>PY01DB1007</option>
+      <option>TN14AP2084</option>
+    </select>
 
-<div id="mainForm">
-  <label>Trip ID</label><input id="tripId" readonly>
-  <label>Date</label><input type="date" id="tripDate">
-  <label>Customer Name</label><input id="custName">
-  <label>Customer Number</label><input id="custNumber">
-  <label>Driver Name</label><input id="driverName">
-  <label>Driver Number</label><input id="driverNumber">
-  <label>Vehicle Model</label>
-  <select id="vehicleModel" onchange="sync(true)">
-    <option value="">-- Select --</option>
-    <option>Innova Crysta</option>
-    <option>Innova Hycross</option>
-    <option>Force Urbania</option>
-  </select>
-  <label>Vehicle Number</label>
-  <select id="vehicleNo" onchange="sync(false)">
-    <option value="">-- Select --</option>
-    <option>PY05N0505</option>
-    <option>PY01DB1007</option>
-    <option>TN14AP2084</option>
-  </select>
-  <label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
-  <label>End Time</label><input type="time" id="endTime" onchange="recalc()">
-  <label>Duration (hrs)</label><input id="duration" readonly>
-  <label>Extra Hours</label><input id="extraHours" readonly>
-  <label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
-  <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
-  <label>Total KM</label><input id="totalKM" readonly>
-  <label>Extra KM</label><input id="extraKM" readonly>
-  <label>Package ₹</label><input id="packageCost" readonly>
-  <label>Extra Hr ₹</label><input id="extraHrCost" readonly>
-  <label>Extra KM ₹</label><input id="extraKmCost" readonly>
-  <label>Toll ₹</label><input type="number" id="toll" value="0" onchange="recalc()">
-  <label>Parking ₹</label><input type="number" id="parking" value="0" onchange="recalc()">
-  <label>Total ₹</label><input id="totalCost" readonly>
-  <label>Note</label><textarea id="note" rows="3" placeholder="Enter notes..."></textarea>
-  <input type="hidden" id="eHr"><input type="hidden" id="eKm"><input type="hidden" id="freeKm">
+    <label>Start Time</label><input type="time" id="startTime" onchange="recalc()" required>
+    <label>End Time</label><input type="time" id="endTime" onchange="recalc()" required>
+    <label>Duration (hrs)</label><input id="duration" readonly>
+    <label>Extra Hours</label><input id="extraHours" readonly>
+    <label>Start KM</label><input type="number" id="startKM" onchange="recalc()" required>
+    <label>End KM</label><input type="number" id="endKM" onchange="recalc()" required>
+    <label>Total KM</label><input id="totalKM" readonly>
+    <label>Extra KM</label><input id="extraKM" readonly>
+    <label>Package ₹</label><input id="packageCost" readonly>
+    <label>Extra Hr ₹</label><input id="extraHrCost" readonly>
+    <label>Extra KM ₹</label><input id="extraKmCost" readonly>
+    <label>Toll ₹</label><input type="number" id="toll" value="0" min="0" onchange="recalc()">
+    <label>Parking ₹</label><input type="number" id="parking" value="0" min="0" onchange="recalc()">
+    <label>Total ₹</label><input id="totalCost" readonly>
+    <label>Note</label><textarea id="note" rows="3" placeholder="Enter notes..."></textarea>
+    <input type="hidden" id="eHr">
+    <input type="hidden" id="eKm">
+    <input type="hidden" id="freeKm">
 
-  <div class="btn-group">
-    <button onclick="saveTrip()">💾 Save</button>
-    <button onclick="showTrips()">📑 View All</button>
-    <button onclick="shareLast()">📤 WhatsApp</button>
-    <button onclick="exportPDF()">📄 Export PDF</button>
+    <div class="btn-group">
+      <button onclick="saveTrip()">💾 Save</button>
+      <button onclick="showTrips()">📑 View All</button>
+      <button onclick="shareLast()">📤 WhatsApp</button>
+      <button onclick="exportPDF()">📄 Export PDF</button>
+    </div>
+    <button style="margin-top:15px;" onclick="openRates()">✏️ Edit Rates</button>
   </div>
-  <button style="margin-top:15px;" onclick="openRates()">✏️ Edit Rates</button>
-</div>
 
-<div class="popup" id="tripPopup">
-  <h3>📋 All Trips</h3>
-  <div id="tripList"></div>
-  <button onclick="tripPopup.style.display='none'">Close</button>
-</div>
+  <!-- Trip Popup -->
+  <div class="popup" id="tripPopup"><div>
+    <h3>📋 All Trips</h3>
+    <div id="tripList"></div>
+    <button onclick="tripPopup.style.display='none'">Close</button>
+  </div></div>
 
-<div class="ratePopup" id="ratePopup">
-  <h3>✏️ Edit Vehicle Rates</h3>
-  <table>
-    <thead><tr><th>Model</th><th>Package ₹</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Free KM</th></tr></thead>
-    <tbody id="rateRows"></tbody>
-  </table>
-  <button onclick="saveRates()">Save Rates</button>
-  <button onclick="ratePopup.style.display='none'">Cancel</button>
-</div>
+  <!-- Rate Edit Popup -->
+  <div class="ratePopup" id="ratePopup"><div>
+    <h3>✏️ Edit Vehicle Rates</h3>
+    <table>
+      <thead>
+        <tr><th>Model</th><th>Package ₹</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Free KM</th></tr>
+      </thead>
+      <tbody id="rateRows"></tbody>
+    </table>
+    <div class="btn-group">
+      <button onclick="saveRates()">Save Rates</button>
+      <button onclick="ratePopup.style.display='none'">Cancel</button>
+    </div>
+  </div></div>
 
-<div id="printContent"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <div id="printContent"></div>
+
 <script>
-
-let RKEY = 'nst-rates', TKEY = 'nst-trips';
+const RKEY = 'nst-rates', TKEY = 'nst-trips';
 let rates = JSON.parse(localStorage.getItem(RKEY)) || {
   "Innova Crysta": { pkg: 7500, hr: 1000, km: 20, free: 80, no: "PY05N0505" },
   "Innova Hycross": { pkg: 8500, hr: 1200, km: 24, free: 60, no: "PY01DB1007" },
@@ -136,20 +210,6 @@ function sync(fromModel) {
   recalc();
 }
 
-function to12Hr(timeStr) {
-  const [h, m] = timeStr.split(":");
-  let hour = parseInt(h);
-  let suffix = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12;
-  return `${hour}:${m} ${suffix}`;
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-}
-
 function recalc() {
   if (startTime.value && endTime.value) {
     let s = new Date(`1970-01-01T${startTime.value}`);
@@ -161,13 +221,33 @@ function recalc() {
     extraHours.value = hrs > 8 ? hrs - 8 : 0;
   }
 
-  let totKm = endKM.value - startKM.value;
+  let sk = parseFloat(startKM.value) || 0;
+  let ek = parseFloat(endKM.value) || 0;
+  let totKm = ek - sk;
   totalKM.value = totKm;
-  extraKM.value = totKm > freeKm.value ? totKm - freeKm.value : 0;
+  let extraKmVal = totKm > freeKm.value ? totKm - freeKm.value : 0;
+  extraKM.value = extraKmVal;
 
   extraHrCost.value = (extraHours.value || 0) * eHr.value;
-  extraKmCost.value = (extraKM.value || 0) * eKm.value;
-  totalCost.value = (+packageCost.value || 0) + (+extraHrCost.value || 0) + (+extraKmCost.value || 0) + (+toll.value || 0) + (+parking.value || 0);
+  extraKmCost.value = (extraKmVal || 0) * eKm.value;
+  totalCost.value =
+    (+packageCost.value || 0) +
+    (+extraHrCost.value || 0) +
+    (+extraKmCost.value || 0) +
+    (+toll.value || 0) +
+    (+parking.value || 0);
+}
+
+function to12Hr(timeStr) {
+  const [h, m] = timeStr.split(":");
+  let hour = parseInt(h);
+  let suffix = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${m} ${suffix}`;
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString("en-GB");
 }
 
 function genId() {
@@ -180,6 +260,11 @@ function genId() {
 }
 
 function saveTrip() {
+  if (!tripDate.value || !custName.value || !driverName.value) {
+    alert("Please fill all required fields.");
+    return;
+  }
+
   let trip = {
     id: tripId.value || genId(),
     date: tripDate.value,
@@ -220,11 +305,12 @@ function saveTrip() {
 function clearForm() {
   document.querySelectorAll('#mainForm input, #mainForm select, #mainForm textarea').forEach(el => el.value = '');
   tripId.value = genId();
+  tripDate.value = new Date().toISOString().split('T')[0];
 }
 
 function showTrips() {
   let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  tripList.innerHTML = arr.map(t => `
+  tripList.innerHTML = arr.length ? arr.map(t => `
     <div class="trip-card">
       <b>${t.id}</b> (${formatDate(t.date)})<br>
       ${t.model} - ${t.no}<br>
@@ -234,12 +320,25 @@ function showTrips() {
       <b>Total: ₹${t.total}</b>
       <div class="trip-actions">
         <button onclick="editTrip('${t.id}')">✏️ Edit</button>
-        <button onclick="deleteTrip('${t.id}')">❌ Delete</button>
+        <button onclick="confirmDelete('${t.id}')">❌ Delete</button>
         <button onclick="shareTrip('${t.id}')">📤 Share</button>
       </div>
     </div>
-  `).join('') || 'No trips yet';
-  tripPopup.style.display = 'block';
+  `).join('') : 'No trips yet';
+  tripPopup.style.display = 'flex';
+}
+
+function confirmDelete(id) {
+  if (confirm("Are you sure you want to delete this trip?")) {
+    deleteTrip(id);
+  }
+}
+
+function deleteTrip(id) {
+  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
+  arr = arr.filter(t => t.id !== id);
+  localStorage.setItem(TKEY, JSON.stringify(arr));
+  showTrips();
 }
 
 function editTrip(id) {
@@ -267,42 +366,35 @@ function editTrip(id) {
   tripPopup.style.display = 'none';
 }
 
-function deleteTrip(id) {
-  let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
-  arr = arr.filter(t => t.id !== id);
-  localStorage.setItem(TKEY, JSON.stringify(arr));
-  showTrips();
-}
-
 function shareTrip(id) {
   let arr = JSON.parse(localStorage.getItem(TKEY) || '[]');
   let t = arr.find(x => x.id === id);
   if (!t) return;
   let msg = `📋 *TRIP SUMMARY*\n*TRIP ID:* ${t.id}\n*DATE:* ${formatDate(t.date)}
 
-👤 *CUSTOMER INFO*
+👤 *CUSTOMER*
 *• Name:* ${t.cust}
 *• Number:* ${t.custNum}
 
-👨‍✈️ *DRIVER INFO*
+👨‍✈️ *DRIVER*
 *• Name:* ${t.driver}
 *• Number:* ${t.driverNum}
 
-🚘 *VEHICLE INFO*
+🚘 *VEHICLE*
 *• Model:* ${t.model}
-*• Vehicle No:* ${t.no}
+*• No:* ${t.no}
 
-🕒 *TIME & DISTANCE*
-*• Start Time:* ${to12Hr(t.start)}
-*• End Time:* ${to12Hr(t.end)}
+🕒 *TIME*
+*• Start:* ${to12Hr(t.start)}
+*• End:* ${to12Hr(t.end)}
 *• Duration:* ${t.duration} hrs
-*• Extra Hrs:* ${t.extraHr}
-*• Total KM:* ${t.totalKM} km
+*• Extra Hr:* ${t.extraHr}
+*• KM:* ${t.totalKM} km
 *• Extra KM:* ${t.extraKM} km
 
-💰 *BILLING*
+💰 *CHARGES*
 *• Package:* ₹${t.pkg}
-*• Extra Hrs:* ₹${t.hrCost}
+*• Extra Hr:* ₹${t.hrCost}
 *• Extra KM:* ₹${t.kmCost}
 *• Toll:* ₹${t.toll}
 *• Parking:* ₹${t.park}
@@ -331,7 +423,7 @@ function openRates() {
         <td><input type="number" value="${r.free}" onchange="rates['${m}'].free=this.value"></td>
       </tr>`;
   }
-  ratePopup.style.display = 'block';
+  ratePopup.style.display = 'flex';
 }
 
 function saveRates() {
@@ -345,36 +437,49 @@ function exportPDF() {
   let content = '';
   trips.forEach(t => {
     content += `
-    <div class="invoice">
-      <h2>NST Travels – Trip Invoice</h2>
-      <div><strong>Trip ID:</strong> ${t.id}</div>
-      <div><strong>Date:</strong> ${formatDate(t.date)}</div>
-      <div><strong>Customer:</strong> ${t.cust} | ${t.custNum}</div>
-      <div><strong>Driver:</strong> ${t.driver} | ${t.driverNum}</div>
-      <div><strong>Vehicle:</strong> ${t.model} - ${t.no}</div>
-      <div><strong>Start:</strong> ${to12Hr(t.start)} | <strong>End:</strong> ${to12Hr(t.end)}</div>
-      <div><strong>Duration:</strong> ${t.duration} hrs | <strong>Extra Hr:</strong> ${t.extraHr}</div>
-      <div><strong>Total KM:</strong> ${t.totalKM} | <strong>Extra KM:</strong> ${t.extraKM}</div>
-      <div><strong>Billing:</strong> ₹${t.pkg} + ₹${t.hrCost} + ₹${t.kmCost} + ₹${t.toll} (Toll) + ₹${t.park} (Parking)</div>
-      <div><strong>Total:</strong> ₹${t.total}</div>
-      <div><strong>Note:</strong> ${t.note || "-"}</div>
-      <hr>
-    </div>`;
+      <div class="invoice">
+        <h2>NST Travels – Trip Invoice</h2>
+        <div><strong>Trip ID:</strong> ${t.id}</div>
+        <div><strong>Date:</strong> ${formatDate(t.date)}</div>
+        <div class="section-title">Customer Info</div>
+        <div>Name: ${t.cust} | Number: ${t.custNum}</div>
+        <div class="section-title">Driver Info</div>
+        <div>Name: ${t.driver} | Number: ${t.driverNum}</div>
+        <div class="section-title">Vehicle Info</div>
+        <div>Model: ${t.model} | Number: ${t.no}</div>
+        <div class="section-title">Time & Distance</div>
+        <table class="invoice-table">
+          <tr><th>Start</th><th>End</th><th>Duration</th><th>Extra Hr</th><th>Total KM</th><th>Extra KM</th></tr>
+          <tr><td>${to12Hr(t.start)}</td><td>${to12Hr(t.end)}</td><td>${t.duration}</td><td>${t.extraHr}</td><td>${t.totalKM}</td><td>${t.extraKM}</td></tr>
+        </table>
+        <div class="section-title">Billing</div>
+        <table class="invoice-table">
+          <tr><th>Package</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Toll ₹</th><th>Parking ₹</th><th>Total ₹</th></tr>
+          <tr><td>Rs ${t.pkg}</td><td>Rs ${t.hrCost}</td><td>Rs ${t.kmCost}</td><td>Rs ${t.toll}</td><td>Rs ${t.park}</td><td><strong>Rs ${t.total}</strong></td></tr>
+        </table>
+        <div class="section-title">Note</div>
+        <div>${t.note || "-"}</div>
+      </div>`;
   });
 
   let printWindow = window.open('', '', 'width=800,height=600');
   printWindow.document.write(`
     <html><head><title>Trip Invoices</title>
     <style>
-      body { font-family: 'Poppins', sans-serif; background: white; color: #000; }
-      .invoice { padding: 15px; border: 2px solid #000; margin-bottom: 30px; page-break-after: always; }
-      .invoice h2 { color: #4b2aad; margin-bottom: 10px; }
+      body { font-family: 'Segoe UI', sans-serif; background: white; color: #000; }
+      .invoice { margin-bottom: 30px; page-break-after: always; padding: 15px; border: 2px solid #000; }
+      .invoice h2 { color: #007bff; border-bottom: 2px solid #000; margin-bottom: 10px; }
+      .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16px; }
+      .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+      .invoice-table th { background: #f0f0f0; }
+      .section-title { font-weight: bold; margin-top: 15px; }
     </style></head><body>${content}</body></html>`);
   printWindow.document.close();
   printWindow.print();
 }
 
 tripId.value = genId();
+tripDate.value = new Date().toISOString().split('T')[0];
 </script>
 </body>
 </html>

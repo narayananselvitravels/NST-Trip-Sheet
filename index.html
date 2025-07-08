@@ -110,7 +110,11 @@
     let c = parseInt(localStorage.getItem("trip-seq")||"1");
     localStorage.setItem("#NST"+String(c).padStart(3,"0"),"used");
     localStorage.setItem("trip-seq",c+1);
-    tripId.value = genId();
+    window.onload = function () {
+  tripId.value = genId();
+  loadDriverDropdowns();
+  loadVehicleDropdowns();
+};
   }
   function formatDate(raw) {
     const d = new Date(raw);
@@ -123,17 +127,30 @@
   }
 
   function syncDriver(fromName) {
-    if (fromName) driverNumber.value = drivers[driverName.value]||"";
-    else for (let k in drivers) if (drivers[k] === driverNumber.value) { driverName.value = k; break; }
+  const drivers = JSON.parse(localStorage.getItem("drivers") || "[]");
+
+  if (fromName) {
+    const d = drivers.find(d => d.name === driverName.value);
+    driverNumber.value = d ? d.phone : "";
+  } else {
+    const d = drivers.find(d => d.phone === driverNumber.value);
+    driverName.value = d ? d.name : "";
   }
+}
 
   function syncVehicle(fromModel) {
-    if (fromModel) vehicleNo.value = vehicles[vehicleModel.value]||"";
-    else for (let k in vehicles) if (vehicles[k] === vehicleNo.value) { vehicleModel.value = k; break; }
+  const vehicles = JSON.parse(localStorage.getItem("vehicles") || "[]");
 
-    const model = vehicleModel.value;
-    currentRates = allRates[model] || { freeKm: 0, freeHrs: 0 };
-    recalc();
+  if (fromModel) {
+    const v = vehicles.find(v => v.model === vehicleModel.value);
+    vehicleNo.value = v ? v.number : "";
+  } else {
+    const v = vehicles.find(v => v.number === vehicleNo.value);
+    vehicleModel.value = v ? v.model : "";
+  }
+
+  recalc();
+}
   }
 
   function recalc() {

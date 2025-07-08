@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
-    h2 { color: #4b2aad; }
+    h2, h3 { color: #4b2aad; }
     .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
     button {
       background: #4b2aad; color: white; border: none; padding: 12px 20px;
@@ -17,7 +17,10 @@
     button:hover { background: #3a208b; }
     .danger { background: #dc3545; }
     .danger:hover { background: #b02a37; }
-    p { font-size: 16px; margin: 10px 0; }
+    input { width: 100%; padding: 8px; margin-bottom: 10px; font-size: 14px; }
+    label { font-weight: 600; margin-top: 10px; display: block; }
+    .rate-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 10px; margin-bottom: 20px; }
+    .rate-box { border: 1px solid #ddd; border-radius: 6px; padding: 10px; background: #fafafa; }
   </style>
 </head>
 <body>
@@ -28,6 +31,7 @@
     <p><strong>Trips Shared:</strong> <span id="tripCount">0</span></p>
     <p><strong>Current Trip ID:</strong> <span id="currentId">#NST001</span></p>
     <button onclick="exportTrips()">📥 Export Shared Trips (Excel)</button>
+    <button onclick="showEditRates()">✏️ Edit Vehicle Rates</button>
   </div>
 
   <div class="section">
@@ -36,8 +40,21 @@
     <button class="danger" onclick="resetAll()">🗑️ Reset All Data</button>
   </div>
 
+  <!-- Hidden Edit Rates Panel -->
+  <div class="section" id="editRatesPanel" style="display:none">
+    <h3>✏️ Edit Vehicle Rates</h3>
+    <form id="ratesForm">
+      <div id="ratesContainer"></div>
+      <button type="submit">💾 Save Rates</button>
+      <button type="button" class="danger" onclick="hideEditRates()">❌ Cancel</button>
+    </form>
+  </div>
+
   <script>
     const SHKEY = "shared-trips";
+    const VEHICLES = ["Innova Crysta", "Innova Hycross", "Force Urbania"];
+
+    let vehicleRates = {};
 
     function getTripCount() {
       let shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
@@ -71,13 +88,60 @@
       }
     }
 
+    function showEditRates() {
+      loadRates();
+      const container = document.getElementById("ratesContainer");
+      container.innerHTML = "";
+
+      VEHICLES.forEach(model => {
+        const r = vehicleRates[model] || { package: 0, extraHr: 0, extraKm: 0, freeKm: 0, freeHrs: 0 };
+        const div = document.createElement("div");
+        div.className = "rate-box";
+        div.innerHTML = `
+          <h4 style="margin:0 0 10px;">🚘 ${model}</h4>
+          <label>Package ₹</label><input name="${model}_package" type="number" value="${r.package}">
+          <label>Extra Hour ₹</label><input name="${model}_extraHr" type="number" value="${r.extraHr}">
+          <label>Extra KM ₹</label><input name="${model}_extraKm" type="number" value="${r.extraKm}">
+          <label>Free KM</label><input name="${model}_freeKm" type="number" value="${r.freeKm}">
+          <label>Free Hours</label><input name="${model}_freeHrs" type="number" value="${r.freeHrs}">
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById("editRatesPanel").style.display = "block";
+    }
+
+    function hideEditRates() {
+      document.getElementById("editRatesPanel").style.display = "none";
+    }
+
+    function loadRates() {
+      const data = localStorage.getItem("vehicle-packages");
+      vehicleRates = data ? JSON.parse(data) : {
+        "Innova Crysta": { package: 7500, extraHr: 1000, extraKm: 20, freeKm: 80, freeHrs: 8 },
+        "Innova Hycross": { package: 8500, extraHr: 1200, extraKm: 24, freeKm: 90, freeHrs: 6 },
+        "Force Urbania": { package: 9500, extraHr: 1500, extraKm: 26, freeKm: 70, freeHrs: 7 }
+      };
+    }
+
+    document.getElementById("ratesForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      VEHICLES.forEach(model => {
+        vehicleRates[model] = {
+          package: +this[`${model}_package`].value,
+          extraHr: +this[`${model}_extraHr`].value,
+          extraKm: +this[`${model}_extraKm`].value,
+          freeKm: +this[`${model}_freeKm`].value,
+          freeHrs: +this[`${model}_freeHrs`].value
+        };
+      });
+      localStorage.setItem("vehicle-packages", JSON.stringify(vehicleRates));
+      alert("✅ Rates saved successfully!");
+      hideEditRates();
+    });
+
     getTripCount();
     getCurrentId();
   </script>
 </body>
 </html>
-<div class="section">
-  <h3>✏️ Rate Management</h3>
-  <p>Edit all package rates and free limits here:</p>
-  <button onclick="window.open('edit-rates.html', '_blank')">✏️ Edit Rate Card</button>
-</div>

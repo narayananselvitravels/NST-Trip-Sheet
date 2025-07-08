@@ -6,245 +6,229 @@
   <title>NST Trip Sheet</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0 auto; padding: 20px; max-width: 800px; background: #f4f6f9; }
+    body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f4f6f9; }
     label { font-weight: bold; margin-top: 10px; display: block; }
-    input, select, textarea, button { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+    input, select, textarea, button {
+      width: 100%; padding: 10px; margin-bottom: 15px;
+      border: 1px solid #ccc; border-radius: 5px; font-size: 16px;
+    }
     button { background: #007bff; color: white; border: none; cursor: pointer; }
     button:hover { background: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #007bff; color: white; }
-    h3 { margin-top: 30px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #007bff; color: white; }
+    h2, h3 { margin-top: 30px; }
   </style>
 </head>
 <body>
-  <h2>📝 NST Trip Sheet</h2>
 
-  <label>Trip ID</label><input id="tripId" readonly>
-  <label>Date</label><input type="date" id="tripDate" onchange="updateDateFormat()">
-  <div id="tripDateDisplay" style="font-weight:bold; margin-bottom:15px;"></div>
+<h2>📝 NST Trip Sheet</h2>
 
-  <label>Customer Name</label><input id="custName">
-  <label>Customer Number</label><input id="custNumber">
+<label>Date (DD-Month-YYYY)</label>
+<input id="tripDate" onfocus="this.type='date'" onblur="convertDate()" />
 
-  <label>Driver Name</label>
-  <select id="driverName" onchange="syncDriver(true)">
-    <option value="">-- Select --</option>
-    <option>Perumal</option>
-    <option>Siva</option>
-  </select>
-  <label>Driver Number</label>
-  <select id="driverNumber" onchange="syncDriver(false)">
-    <option value="">-- Select --</option>
-    <option>9699994563</option>
-    <option>9551208961</option>
-  </select>
+<label>Trip ID</label>
+<input id="tripId" readonly>
 
-  <label>Vehicle Model</label>
-  <select id="vehicleModel" onchange="syncVehicle(true)">
-    <option value="">-- Select --</option>
-    <option>Innova Crysta</option>
-    <option>Innova Hycross</option>
-    <option>Force Urbania</option>
-  </select>
-  <label>Vehicle Number</label>
-  <select id="vehicleNo" onchange="syncVehicle(false)">
-    <option value="">-- Select --</option>
-    <option>PY05N0505</option>
-    <option>PY01DB1007</option>
-    <option>TN14AP2084</option>
-  </select>
+<label>Customer Name</label>
+<input id="custName">
+<label>Customer Number</label>
+<input id="custNumber">
 
-  <label>Start Time</label><input type="time" id="startTime">
-  <label>End Time</label><input type="time" id="endTime">
-  <label>Duration (hrs)</label><input id="duration" readonly>
-  <label>Extra Hours</label><input id="extraHours" readonly>
+<label>Driver Name</label>
+<select id="driverName" onchange="syncDriver(true)">
+  <option value="">-- Select --</option>
+  <option>Perumal</option>
+  <option>Siva</option>
+</select>
+<label>Driver Number</label>
+<select id="driverNumber" onchange="syncDriver(false)">
+  <option value="">-- Select --</option>
+  <option>9699994563</option>
+  <option>9551208961</option>
+</select>
 
-  <label>Start KM</label><input type="number" id="startKM">
-  <label>End KM</label><input type="number" id="endKM">
-  <label>Total KM</label><input id="totalKM" readonly>
-  <label>Extra KM</label><input id="extraKM" readonly>
+<label>Vehicle Model</label>
+<select id="vehicleModel" onchange="syncVehicle(true)">
+  <option value="">-- Select --</option>
+  <option>Innova Crysta</option>
+  <option>Innova Hycross</option>
+  <option>Force Urbania</option>
+</select>
+<label>Vehicle Number</label>
+<select id="vehicleNo" onchange="syncVehicle(false)">
+  <option value="">-- Select --</option>
+  <option>PY05N0505</option>
+  <option>PY01DB1007</option>
+  <option>TN14AP2084</option>
+</select>
 
-  <label>Parking ₹</label><input type="number" id="parking" value="0">
-  <label>Toll ₹</label><input type="number" id="toll" value="0">
-  <label>Note</label><textarea id="note" rows="3"></textarea>
+<label>Start Time</label><input type="time" id="startTime">
+<label>End Time</label><input type="time" id="endTime">
+<label>Duration (hrs)</label><input id="duration" readonly>
+<label>Extra Hours</label><input id="extraHours" readonly>
 
-  <div style="margin-top: 15px;">
-    <button onclick="shareWhatsApp()">📤 WhatsApp</button>
-    <button onclick="showSharedTrips()">📋 View Shared Trips</button>
-    <button onclick="exportSharedTrips()">📥 Export Shared Trips (Excel)</button>
-  </div>
+<label>Start KM</label><input type="number" id="startKM">
+<label>End KM</label><input type="number" id="endKM">
+<label>Total KM</label><input id="totalKM" readonly>
+<label>Extra KM</label><input id="extraKM" readonly>
 
-  <div id="sharedTripsList" style="margin-top: 20px;"></div>
+<label>Parking ₹</label><input type="number" id="parking">
+<label>Toll ₹</label><input type="number" id="toll">
+<label>Note</label><textarea id="note" rows="3"></textarea>
 
-  <script>
-    const driverMap = {
-      "Perumal": "9699994563",
-      "Siva": "9551208961"
-    };
+<button onclick="shareTrip()">📤 Share via WhatsApp</button>
+<button onclick="viewShared()">📋 View Shared Trips</button>
+<button onclick="exportExcel()">📥 Export Shared Trips</button>
 
-    const driverReverseMap = {
-      "9699994563": "Perumal",
-      "9551208961": "Siva"
-    };
+<div id="sharedTrips"></div>
 
-    const vehicleMap = {
-      "Innova Crysta": "PY05N0505",
-      "Innova Hycross": "PY01DB1007",
-      "Force Urbania": "TN14AP2084"
-    };
+<script>
+const driverMap = {
+  "Perumal": "9699994563",
+  "Siva": "9551208961"
+};
+const driverReverseMap = {
+  "9699994563": "Perumal",
+  "9551208961": "Siva"
+};
+const vehicleMap = {
+  "Innova Crysta": "PY05N0505",
+  "Innova Hycross": "PY01DB1007",
+  "Force Urbania": "TN14AP2084"
+};
+const vehicleReverseMap = {
+  "PY05N0505": "Innova Crysta",
+  "PY01DB1007": "Innova Hycross",
+  "TN14AP2084": "Force Urbania"
+};
+const TKEY = "sharedTrips";
 
-    const vehicleReverseMap = {
-      "PY05N0505": "Innova Crysta",
-      "PY01DB1007": "Innova Hycross",
-      "TN14AP2084": "Force Urbania"
-    };
+function syncDriver(fromName) {
+  if (fromName) driverNumber.value = driverMap[driverName.value] || '';
+  else driverName.value = driverReverseMap[driverNumber.value] || '';
+}
+function syncVehicle(fromModel) {
+  if (fromModel) vehicleNo.value = vehicleMap[vehicleModel.value] || '';
+  else vehicleModel.value = vehicleReverseMap[vehicleNo.value] || '';
+}
 
-    const SHKEY = "shared-trips";
+function convertDate() {
+  const input = document.getElementById("tripDate");
+  if (!input.value) return;
+  const date = new Date(input.value);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleString('default', { month: 'long' });
+  const year = date.getFullYear();
+  input.type = "text";
+  input.value = `${day}-${month}-${year}`;
+}
 
-    function syncVehicle(fromModel) {
-      if (fromModel) {
-        vehicleNo.value = vehicleMap[vehicleModel.value] || '';
-      } else {
-        vehicleModel.value = vehicleReverseMap[vehicleNo.value] || '';
-      }
-    }
+function to12Hr(timeStr) {
+  if (!timeStr) return '';
+  let [h, m] = timeStr.split(":");
+  h = parseInt(h);
+  const suffix = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${m} ${suffix}`;
+}
+function getTripId() {
+  let id = parseInt(localStorage.getItem("lastTripId") || "0") + 1;
+  localStorage.setItem("lastTripId", id);
+  return "#NST" + String(id).padStart(3, '0');
+}
+tripId.value = getTripId();
 
-    function syncDriver(fromName) {
-      if (fromName) {
-        driverNumber.value = driverMap[driverName.value] || '';
-      } else {
-        driverName.value = driverReverseMap[driverNumber.value] || '';
-      }
-    }
+function shareTrip() {
+  const trip = {
+    id: tripId.value,
+    date: tripDate.value,
+    custName: custName.value,
+    custNumber: custNumber.value,
+    driverName: driverName.value,
+    driverNumber: driverNumber.value,
+    vehicleModel: vehicleModel.value,
+    vehicleNo: vehicleNo.value,
+    startTime: startTime.value,
+    endTime: endTime.value,
+    duration: duration.value,
+    extraHours: extraHours.value,
+    startKM: startKM.value,
+    endKM: endKM.value,
+    totalKM: totalKM.value,
+    extraKM: extraKM.value,
+    parking: parking.value,
+    toll: toll.value,
+    note: note.value
+  };
+  const msg = `📋 *TRIP SUMMARY*
 
-    function updateDateFormat() {
-      const dateInput = document.getElementById('tripDate');
-      const display = document.getElementById('tripDateDisplay');
-      if (!dateInput.value) return;
-      const d = new Date(dateInput.value);
-      const options = { day: '2-digit', month: 'long', year: 'numeric' };
-      const formatted = d.toLocaleDateString('en-GB', options);
-      display.textContent = "📅 " + formatted;
-      display.dataset.raw = dateInput.value;
-    }
-
-    function formatDate(rawDate) {
-      const d = new Date(rawDate);
-      return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
-    }
-
-    function to12Hr(timeStr) {
-      const [h, m] = timeStr.split(":");
-      let hour = parseInt(h);
-      let suffix = hour >= 12 ? "PM" : "AM";
-      hour = hour % 12 || 12;
-      return `${hour}:${m} ${suffix}`;
-    }
-
-    function reserveNextId() {
-      let id = parseInt(localStorage.getItem("lastTripId") || "1");
-      localStorage.setItem("lastTripId", id + 1);
-      tripId.value = "#NST" + String(id + 1).padStart(3, '0');
-    }
-
-    function genId() {
-      let id = parseInt(localStorage.getItem("lastTripId") || "1");
-      return "#NST" + String(id).padStart(3, '0');
-    }
-
-    function shareWhatsApp() {
-      const rawDate = tripDateDisplay.dataset.raw;
-      if (!rawDate) {
-        alert("Please select a trip date.");
-        return;
-      }
-
-      const tripData = {
-        id: tripId.value,
-        date: rawDate,
-        name: custName.value,
-        model: vehicleModel.value
-      };
-
-      const msg = `📋 *TRIP SUMMARY*
-
-*TRIP ID:* ${tripData.id}
-*DATE:* ${formatDate(rawDate)}
+*TRIP ID:* ${trip.id}
+*DATE:* ${trip.date}
 
 👤 *CUSTOMER INFO*
-• *Name:* ${custName.value}
-• *Number:* ${custNumber.value}
+• *Name:* ${trip.custName}
+• *Number:* ${trip.custNumber}
 
 👨‍✈️ *DRIVER INFO*
-• *Name:* ${driverName.value}
-• *Number:* ${driverNumber.value}
+• *Name:* ${trip.driverName}
+• *Number:* ${trip.driverNumber}
 
 🚘 *VEHICLE INFO*
-• *Model:* ${vehicleModel.value}
-• *Vehicle No:* ${vehicleNo.value}
+• *Model:* ${trip.vehicleModel}
+• *Vehicle No:* ${trip.vehicleNo}
 
 🕒 *TIME & DISTANCE*
-• *Start Time:* ${to12Hr(startTime.value)}
-• *End Time:* ${to12Hr(endTime.value)}
-• *Duration:* ${duration.value || 0} hrs
-• *Extra Hrs:* ${extraHours.value || 0}
-• *Total KM:* ${totalKM.value || 0} km
-• *Extra KM:* ${extraKM.value || 0} km
+• *Start Time:* ${to12Hr(trip.startTime)}
+• *End Time:* ${to12Hr(trip.endTime)}
+• *Duration:* ${trip.duration} hrs
+• *Extra Hrs:* ${trip.extraHours}
+• *Total KM:* ${trip.totalKM} km
+• *Extra KM:* ${trip.extraKM} km
 
 💰 *CHARGES*
-• *Parking:* ₹${parking.value || 0}
-• *Toll:* ₹${toll.value || 0}
+• *Parking:* ₹${trip.parking}
+• *Toll:* ₹${trip.toll}
 
-📝 *Note:* ${note.value || "-"}`;
+📝 *Note:* ${trip.note || "-"}`;
 
-      window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-      recordShare(tripData);
-      reserveNextId();
-    }
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
 
-    function recordShare(tripData) {
-      let shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-      shared.push({
-        id: tripData.id,
-        date: formatDate(tripData.date),
-        name: tripData.name,
-        vehicle: tripData.model
-      });
-      localStorage.setItem(SHKEY, JSON.stringify(shared));
-    }
+  let trips = JSON.parse(localStorage.getItem(TKEY) || "[]");
+  trips.push(trip);
+  localStorage.setItem(TKEY, JSON.stringify(trips));
+  tripId.value = getTripId(); // increment for next
+}
 
-    function showSharedTrips() {
-      const shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-      const div = document.getElementById("sharedTripsList");
+function viewShared() {
+  const trips = JSON.parse(localStorage.getItem(TKEY) || "[]");
+  if (!trips.length) return sharedTrips.innerHTML = "<p>No shared trips.</p>";
+  let html = `<h3>📋 Shared Trips</h3><table><tr>
+    <th>ID</th><th>Date</th><th>Cust</th><th>Driver</th><th>Vehicle</th>
+    <th>Time</th><th>KM</th><th>Charges</th><th>Note</th></tr>`;
+  trips.forEach(t => {
+    html += `<tr>
+      <td>${t.id}</td><td>${t.date}</td><td>${t.custName}<br>${t.custNumber}</td>
+      <td>${t.driverName}<br>${t.driverNumber}</td><td>${t.vehicleModel}<br>${t.vehicleNo}</td>
+      <td>${to12Hr(t.startTime)} → ${to12Hr(t.endTime)}<br>${t.duration} hrs (${t.extraHours} extra)</td>
+      <td>${t.totalKM} km<br>+${t.extraKM} extra</td>
+      <td>Parking: ₹${t.parking}<br>Toll: ₹${t.toll}</td>
+      <td>${t.note || "-"}</td>
+    </tr>`;
+  });
+  html += "</table>";
+  sharedTrips.innerHTML = html;
+}
 
-      if (!shared.length) {
-        div.innerHTML = "<p>No trips shared yet.</p>";
-        return;
-      }
+function exportExcel() {
+  const trips = JSON.parse(localStorage.getItem(TKEY) || "[]");
+  if (!trips.length) return alert("No data to export.");
+  const ws = XLSX.utils.json_to_sheet(trips);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Shared Trips");
+  XLSX.writeFile(wb, "NST_Shared_Trips.xlsx");
+}
+</script>
 
-      let html = "<h3>📋 Shared Trips History</h3><table><tr><th>Trip ID</th><th>Date</th><th>Customer</th><th>Vehicle</th></tr>";
-      shared.forEach(t => {
-        html += `<tr><td>${t.id}</td><td>${t.date}</td><td>${t.name}</td><td>${t.vehicle}</td></tr>`;
-      });
-      html += "</table>";
-      div.innerHTML = html;
-    }
-
-    function exportSharedTrips() {
-      const shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-      if (!shared.length) {
-        alert("No shared trips to export.");
-        return;
-      }
-
-      const ws = XLSX.utils.json_to_sheet(shared);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "SharedTrips");
-      XLSX.writeFile(wb, "Shared_Trips.xlsx");
-    }
-
-    tripId.value = genId();
-  </script>
 </body>
 </html>

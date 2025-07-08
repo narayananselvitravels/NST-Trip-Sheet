@@ -44,7 +44,8 @@
   <label>Trip ID</label><input id="tripId" readonly>
 
   <label>Date</label>
-  <input type="text" id="tripDate" placeholder="Select Date" readonly style="cursor: pointer;">
+  <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor: pointer;">
+  <input type="date" id="tripDate" style="display: none;">
 
   <label>Customer Name</label><input id="custName">
   <label>Customer Number</label><input id="custNumber">
@@ -158,7 +159,7 @@
     }
 
     function shareWhatsApp() {
-      const rawDate = document.getElementById("tripDate").dataset.raw;
+      const rawDate = tripDateDisplay.dataset.raw;
       if (!rawDate) {
         alert("Please select a date before sharing.");
         return;
@@ -187,29 +188,29 @@
       }, 1000);
     }
 
-    // Date Picker
+    // Working date picker logic
+    const tripDateDisplay = document.getElementById("tripDateDisplay");
     const tripDate = document.getElementById("tripDate");
-    tripDate.addEventListener("click", () => {
-      const picker = document.createElement("input");
-      picker.type = "date";
-      picker.style.position = "absolute";
-      picker.style.opacity = 0;
-      document.body.appendChild(picker);
-      picker.oninput = () => {
-        const date = new Date(picker.value);
-        const display = date.toLocaleDateString("en-GB", {
-          day: '2-digit', month: 'long', year: 'numeric',
-          timeZone: 'Asia/Kolkata'
-        });
-        tripDate.value = display;
-        tripDate.dataset.raw = picker.value;
-        document.body.removeChild(picker);
-      };
-      picker.focus();
-      picker.click();
+
+    tripDateDisplay.addEventListener("click", () => {
+      tripDate.click();
     });
 
-    // Init
+    tripDate.addEventListener("change", () => {
+      const raw = tripDate.value;
+      if (!raw) return;
+      const d = new Date(raw);
+      const display = d.toLocaleDateString("en-GB", {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata'
+      });
+      tripDateDisplay.value = display;
+      tripDateDisplay.dataset.raw = raw;
+    });
+
+    // Init trip ID
     tripId.value = genId();
   </script>
 </body>

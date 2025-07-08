@@ -1,0 +1,73 @@
+<!-- backup-restore.html --><!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Backup & Restore – NST Travels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; padding: 20px; background: #f4f6f9; max-width: 700px; margin: auto; }
+    h2 { color: #4b2aad; }
+    .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    button {
+      background: #4b2aad; color: white; padding: 12px 20px; border: none;
+      border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 10px;
+    }
+    button:hover { background: #3a208b; }
+    input[type="file"] { margin-top: 10px; }
+    textarea {
+      width: 100%; height: 120px; padding: 10px; border-radius: 6px;
+      border: 1px solid #ccc; margin-top: 10px; font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h2>🗂️ Backup & Restore NST Data</h2>  <div class="section">
+    <h3>📤 Export Backup</h3>
+    <p>Download all trips, drivers, vehicles, and rates into a JSON file.</p>
+    <button onclick="exportBackup()">⬇️ Download Backup File</button>
+  </div>  <div class="section">
+    <h3>📥 Restore from Backup</h3>
+    <p>Select a valid JSON backup file to restore all data.</p>
+    <input type="file" id="fileInput" accept="application/json" />
+    <button onclick="importBackup()">🔁 Restore Backup</button>
+  </div>  <script>
+    function exportBackup() {
+      const trips = JSON.parse(localStorage.getItem("shared-trips") || "[]");
+      const drivers = JSON.parse(localStorage.getItem("drivers") || "[]");
+      const vehicles = JSON.parse(localStorage.getItem("vehicles") || "[]");
+      const rates = JSON.parse(localStorage.getItem("vehicle-packages") || "{}");
+      const seq = localStorage.getItem("trip-seq") || "1";
+
+      const data = { trips, drivers, vehicles, rates, tripSeq: seq };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `NST_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+    }
+
+    function importBackup() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return alert("Please select a backup file");
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.trips || !data.rates) throw new Error();
+
+          localStorage.setItem("shared-trips", JSON.stringify(data.trips));
+          localStorage.setItem("drivers", JSON.stringify(data.drivers || []));
+          localStorage.setItem("vehicles", JSON.stringify(data.vehicles || []));
+          localStorage.setItem("vehicle-packages", JSON.stringify(data.rates));
+          localStorage.setItem("trip-seq", data.tripSeq || "1");
+
+          alert("✅ Backup restored successfully!");
+        } catch (err) {
+          alert("❌ Invalid or corrupted backup file");
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script></body>
+</html>

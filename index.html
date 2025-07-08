@@ -94,6 +94,18 @@
   const vehicles = {"Innova Crysta":"PY05N0505","Innova Hycross":"PY01DB1007","Force Urbania":"TN14AP2084"};
   const SHKEY = "shared-trips";
 
+  let allRates = {};
+  let currentRates = {};
+
+  function loadVehicleRates() {
+    const data = localStorage.getItem("vehicle-packages");
+    allRates = data ? JSON.parse(data) : {
+      "Innova Crysta": { package: 7500, extraHr: 1000, extraKm: 20, freeKm: 80, freeHrs: 8 },
+      "Innova Hycross": { package: 8500, extraHr: 1200, extraKm: 24, freeKm: 90, freeHrs: 6 },
+      "Force Urbania": { package: 9500, extraHr: 1500, extraKm: 26, freeKm: 70, freeHrs: 7 }
+    };
+  }
+
   function genId() {
     let n = parseInt(localStorage.getItem("trip-seq")||"1");
     return "#NST"+String(n).padStart(3,"0");
@@ -122,6 +134,9 @@
   function syncVehicle(fromModel) {
     if (fromModel) vehicleNo.value = vehicles[vehicleModel.value]||"";
     else for (let k in vehicles) if (vehicles[k] === vehicleNo.value) { vehicleModel.value = k; break; }
+
+    const model = vehicleModel.value;
+    currentRates = allRates[model] || { freeKm: 0, freeHrs: 0 };
     recalc();
   }
 
@@ -129,12 +144,18 @@
     if (startTime.value && endTime.value) {
       let s=new Date(`1970-01-01T${startTime.value}`), e=new Date(`1970-01-01T${endTime.value}`);
       let diff=(e-s)/3600000; if (diff<0) diff+=24;
-      duration.value = Math.ceil(diff);
-      extraHours.value = duration.value > 8 ? duration.value - 8 : 0;
+      const dur = Math.ceil(diff);
+      duration.value = dur;
+
+      const freeHrs = currentRates.freeHrs || 0;
+      extraHours.value = dur > freeHrs ? dur - freeHrs : 0;
     }
+
     let tot = +endKM.value - +startKM.value;
     totalKM.value = tot;
-    extraKM.value = tot > 0 ? tot - (+vehicles[vehicleModel.value]||0) : 0;
+
+    const freeKm = currentRates.freeKm || 0;
+    extraKM.value = (tot > freeKm) ? tot - freeKm : "";
   }
 
   function recordShare(d) {
@@ -222,6 +243,7 @@
     tripDateDisplay.dataset.raw = raw;
   });
 
+  loadVehicleRates();
   tripId.value = genId();
 </script>
 

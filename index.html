@@ -50,3 +50,162 @@
     <option value="9699994563">9699994563</option>
     <option value="9551208961">9551208961</option>
   </select>
+  <label>Vehicle Model</label>
+  <select id="vehicleModel" onchange="syncVehicle(true)">
+    <option value="">-- Select --</option>
+    <option>Innova Crysta</option>
+    <option>Innova Hycross</option>
+    <option>Force Urbania</option>
+  </select>
+
+  <label>Vehicle Number</label>
+  <select id="vehicleNo" onchange="syncVehicle(false)">
+    <option value="">-- Select --</option>
+    <option>PY05N0505</option>
+    <option>PY01DB1007</option>
+    <option>TN14AP2084</option>
+  </select>
+
+  <label>Start Time</label>
+  <input type="time" id="startTime" />
+
+  <label>End Time</label>
+  <input type="time" id="endTime" />
+
+  <label>Start KM</label>
+  <input type="number" id="startKM" />
+
+  <label>End KM</label>
+  <input type="number" id="endKM" />
+
+  <label>Parking ₹</label>
+  <input type="number" id="parking" value="0" />
+
+  <label>Toll ₹</label>
+  <input type="number" id="toll" value="0" />
+
+  <label>Note</label>
+  <textarea id="note" rows="3"></textarea>
+
+  <div class="btn-group">
+    <button onclick="shareTrip()">📤 Share WhatsApp</button>
+    <button onclick="viewShared()">📑 View Shared Trips</button>
+  </div>
+</div>
+
+<div id="sharedTrips"></div>
+
+<script>
+let tripCounter = 1;
+let sharedData = JSON.parse(localStorage.getItem("shared-trips") || "[]");
+let drivers = {
+  "Perumal": "9699994563",
+  "Siva": "9551208961"
+};
+let vehicles = {
+  "Innova Crysta": "PY05N0505",
+  "Innova Hycross": "PY01DB1007",
+  "Force Urbania": "TN14AP2084"
+};
+
+function updateDisplayDate() {
+  const raw = tripDate.value;
+  const d = new Date(raw);
+  if (!isNaN(d)) {
+    const formatted = `${String(d.getDate()).padStart(2, '0')}-${d.toLocaleString('default', { month: 'long' })}-${d.getFullYear()}`;
+    dateFormatted.innerText = `Selected Date: ${formatted}`;
+  } else {
+    dateFormatted.innerText = "";
+  }
+}
+
+function to12Hr(t) {
+  const [h, m] = t.split(":");
+  const hour = +h % 12 || 12;
+  const suffix = +h >= 12 ? "PM" : "AM";
+  return `${hour}:${m} ${suffix}`;
+}
+
+function syncDriver(fromName) {
+  if (fromName) {
+    driverNumber.value = drivers[driverName.value] || "";
+  } else {
+    driverName.value = Object.keys(drivers).find(name => drivers[name] === driverNumber.value) || "";
+  }
+}
+
+function syncVehicle(fromModel) {
+  if (fromModel) {
+    vehicleNo.value = vehicles[vehicleModel.value] || "";
+  } else {
+    vehicleModel.value = Object.keys(vehicles).find(m => vehicles[m] === vehicleNo.value) || "";
+  }
+}
+
+function generateTripId() {
+  return "#NST" + String(tripCounter).padStart(3, '0');
+}
+
+function shareTrip() {
+  if (!tripDate.value) return alert("Please select a date.");
+  const id = generateTripId();
+  const d = new Date(tripDate.value);
+  const msg = `📋 *TRIP SUMMARY*\n\n*TRIP ID:* ${id}\n*DATE:* ${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth()+1).padStart(2, '0')}-${d.getFullYear()}
+\n👤 *CUSTOMER INFO*\n• Name: ${custName.value}\n• Number: ${custNumber.value}
+\n👨‍✈ *DRIVER INFO*\n• Name: ${driverName.value}\n• Number: ${driverNumber.value}
+\n🚘 *VEHICLE INFO*\n• Model: ${vehicleModel.value}\n• Vehicle No: ${vehicleNo.value}
+\n🕒 *TIME & DISTANCE*\n• Start Time: ${to12Hr(startTime.value)}\n• End Time: ${to12Hr(endTime.value)}
+\n• Total KM: ${endKM.value - startKM.value} km
+\n• Parking: ₹${parking.value}\n• Toll: ₹${toll.value}
+\n📝 *Note:* ${note.value || "-"}`;
+
+  const win = window.open("https://wa.me/?text=" + encodeURIComponent(msg));
+  if (win) {
+    sharedData.push({
+      id,
+      date: tripDate.value,
+      custName: custName.value,
+      custNumber: custNumber.value,
+      driverName: driverName.value,
+      driverNumber: driverNumber.value,
+      vehicleModel: vehicleModel.value,
+      vehicleNo: vehicleNo.value,
+      startTime: startTime.value,
+      endTime: endTime.value,
+      totalKM: endKM.value - startKM.value,
+      parking: parking.value,
+      toll: toll.value,
+      note: note.value
+    });
+    localStorage.setItem("shared-trips", JSON.stringify(sharedData));
+    tripCounter++;
+    tripId.value = generateTripId();
+  }
+}
+
+function viewShared() {
+  if (!sharedData.length) return sharedTrips.innerHTML = "<p>No shared trips yet.</p>";
+  let html = `<h3>📋 Shared Trips</h3><table><tr><th>Trip ID</th><th>Date</th><th>Customer</th><th>Driver</th><th>Vehicle</th><th>Time</th><th>KM</th><th>Charges</th><th>Note</th></tr>`;
+  sharedData.forEach(t => {
+    const d = new Date(t.date.replace(/-/g, '/'));
+    const formattedDate = `${String(d.getDate()).padStart(2, '0')}-${d.toLocaleString('default', { month: 'long' })}-${d.getFullYear()}`;
+    html += `<tr>
+      <td>${t.id}</td>
+      <td>${formattedDate}</td>
+      <td>${t.custName}<br>${t.custNumber}</td>
+      <td>${t.driverName}<br>${t.driverNumber}</td>
+      <td>${t.vehicleModel}<br>${t.vehicleNo}</td>
+      <td>${to12Hr(t.startTime)} → ${to12Hr(t.endTime)}</td>
+      <td>${t.totalKM} km</td>
+      <td>Parking: ₹${t.parking}<br>Toll: ₹${t.toll}</td>
+      <td>${t.note || "-"}</td>
+    </tr>`;
+  });
+  html += "</table>";
+  sharedTrips.innerHTML = html;
+}
+
+tripId.value = generateTripId();
+</script>
+</body>
+</html>

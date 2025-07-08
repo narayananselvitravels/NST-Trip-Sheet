@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<html lang="en"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NST Trip Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -11,90 +10,241 @@
     input, select, textarea, button { width:100%;padding:10px;margin:5px 0 15px;border:1px solid #ccc;border-radius:5px;font-size:16px }
     button { background:#4b2aad;color:#fff;border:none;cursor:pointer }
     button:hover { background:#3a208b }
+    table { width:100%;border-collapse:collapse;margin-top:20px }
+    table, th, td { border:1px solid #ddd }
+    th, td { padding:8px;text-align:left }
+    th { background:#4b2aad;color:#fff }
   </style>
-</head>
-<body>
+</head><body>
 
 <h2>📝 NST Trip Sheet</h2>
 
 <label>Trip ID</label><input id="tripId" readonly>
-<label>Date</label><input type="date" id="tripDate">
+
+<label>Date</label>
+<div style="position:relative">
+  <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor:pointer">
+  <input type="date" id="tripDate" style="opacity:0;position:absolute;top:0;left:0;width:100%;height:100%;cursor:pointer">
+</div>
+
 <label>Customer Name</label><input id="custName">
 <label>Customer Number</label><input id="custNumber">
 
-<label>Vehicle Model</label>
-<select id="vehicleModel" onchange="applyRates()">
+<label>Driver Name</label>
+<select id="driverName" onchange="syncDriver(true)">
   <option value="">-- Select --</option>
-  <option>Innova Crysta</option>
-  <option>Innova Hycross</option>
-  <option>Force Urbania</option>
+  <option>Perumal</option><option>Siva</option>
+</select>
+
+<label>Driver Number</label>
+<select id="driverNumber" onchange="syncDriver(false)">
+  <option value="">-- Select --</option>
+  <option>9699994563</option><option>9551208961</option>
+</select>
+
+<label>Vehicle Model</label>
+<select id="vehicleModel" onchange="syncVehicle(true)">
+  <option value="">-- Select --</option>
+  <option>Innova Crysta</option><option>Innova Hycross</option><option>Force Urbania</option>
+</select>
+
+<label>Vehicle Number</label>
+<select id="vehicleNo" onchange="syncVehicle(false)">
+  <option value="">-- Select --</option>
+  <option>PY05N0505</option><option>PY01DB1007</option><option>TN14AP2084</option>
 </select>
 
 <label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
 <label>End Time</label><input type="time" id="endTime" onchange="recalc()">
+<label>Duration (hrs)</label><input id="duration" readonly>
+<label>Extra Hours</label><input id="extraHours" readonly>
 <label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
 <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
-
-<label>Duration</label><input id="duration" readonly>
-<label>Extra Hours</label><input id="extraHours" readonly>
 <label>Total KM</label><input id="totalKM" readonly>
 <label>Extra KM</label><input id="extraKM" readonly>
 
-<button onclick="share()">📤 Share Trip</button>
+<label>Parking ₹</label><input type="number" id="parking" value="0">
+<label>Toll ₹</label><input type="number" id="toll" value="0">
 
+<label>Note</label><textarea id="note" rows="3" placeholder="Enter any trip notes..."></textarea>
+
+<div style="margin-top:15px">
+  <button onclick="shareWhatsApp()">📤 Share via WhatsApp</button>
+  <button onclick="showSharedTrips()">📋 View Shared Trips</button>
+  <button onclick="exportSharedTrips()">📥 Export Shared Trips (Excel)</button>
+  <button onclick="document.getElementById('adminLogin').style.display='block'" style="background:#6c757d">🔐 Admin Panel</button>
+</div>
+
+<div id="sharedTripsList"></div>
+
+<!-- Admin login modal -->
+<div id="adminLogin" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999">
+  <div style="background:white;max-width:300px;margin:100px auto;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.3)">
+    <h3 style="margin-top:0">🔐 Admin Login</h3>
+    <label>Username</label><input type="text" id="adminUser" placeholder="Username">
+    <label>Password</label><input type="password" id="adminPass" placeholder="Password">
+    <button onclick="loginAdmin()">Login</button>
+    <button onclick="document.getElementById('adminLogin').style.display='none'" style="background:#dc3545;margin-top:10px">Cancel</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-  let rates = {};
+  const drivers = {"Perumal":"9699994563","Siva":"9551208961"};
+  const vehicles = {"Innova Crysta":"PY05N0505","Innova Hycross":"PY01DB1007","Force Urbania":"TN14AP2084"};
+  const SHKEY = "shared-trips";
 
-  function loadRates() {
-    const r = localStorage.getItem("vehicle-packages");
-    rates = r ? JSON.parse(r) : {};
+  let allRates = {};
+  let currentRates = {};
+
+  function loadVehicleRates() {
+    const data = localStorage.getItem("vehicle-packages");
+    allRates = data ? JSON.parse(data) : {
+      "Innova Crysta": { package: 7500, extraHr: 1000, extraKm: 20, freeKm: 80, freeHrs: 8 },
+      "Innova Hycross": { package: 8500, extraHr: 1200, extraKm: 24, freeKm: 90, freeHrs: 6 },
+      "Force Urbania": { package: 9500, extraHr: 1500, extraKm: 26, freeKm: 70, freeHrs: 7 }
+    };
   }
 
   function genId() {
     let n = parseInt(localStorage.getItem("trip-seq")||"1");
     return "#NST"+String(n).padStart(3,"0");
   }
-
   function reserveNextId() {
     let c = parseInt(localStorage.getItem("trip-seq")||"1");
+    localStorage.setItem("#NST"+String(c).padStart(3,"0"),"used");
     localStorage.setItem("trip-seq",c+1);
     tripId.value = genId();
   }
+  function formatDate(raw) {
+    const d = new Date(raw);
+    return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
+  }
+  function to12Hr(t) {
+    if (!t) return "";
+    const [h,m]=t.split(":"); let d=new Date(); d.setHours(h,m);
+    return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'});
+  }
 
-  function applyRates() {
+  function syncDriver(fromName) {
+    if (fromName) driverNumber.value = drivers[driverName.value]||"";
+    else for (let k in drivers) if (drivers[k] === driverNumber.value) { driverName.value = k; break; }
+  }
+
+  function syncVehicle(fromModel) {
+    if (fromModel) vehicleNo.value = vehicles[vehicleModel.value]||"";
+    else for (let k in vehicles) if (vehicles[k] === vehicleNo.value) { vehicleModel.value = k; break; }
+
+    const model = vehicleModel.value;
+    currentRates = allRates[model] || { freeKm: 0, freeHrs: 0 };
     recalc();
   }
 
   function recalc() {
-    const model = vehicleModel.value;
-    if (!model || !rates[model]) return;
-
-    const { freeHrs, freeKm } = rates[model];
-    let s = startTime.value, e = endTime.value;
-    let dur = 0;
-
-    if (s && e) {
-      let st = new Date(`2000-01-01T${s}`);
-      let et = new Date(`2000-01-01T${e}`);
-      dur = Math.ceil((et - st)/3600000);
-      if (dur < 0) dur += 24;
+    if (startTime.value && endTime.value) {
+      let s=new Date(`1970-01-01T${startTime.value}`),
+          e=new Date(`1970-01-01T${endTime.value}`);
+      let diff=(e-s)/3600000; if (diff<0) diff+=24;
+      const dur = Math.ceil(diff);
       duration.value = dur;
+
+      const freeHrs = currentRates.freeHrs || 0;
       extraHours.value = dur > freeHrs ? dur - freeHrs : 0;
     }
+    let tot = +endKM.value - +startKM.value;
+    totalKM.value = tot;
 
-    let km = endKM.value - startKM.value;
-    totalKM.value = km;
-    extraKM.value = km > freeKm ? km - freeKm : 0;
+    const freeKm = currentRates.freeKm || 0;
+    extraKM.value = (tot > freeKm) ? tot - freeKm : "";
   }
 
-  function share() {
-    alert("Shared Trip: " + tripId.value);
+  function recordShare(d) {
+    let arr=JSON.parse(localStorage.getItem(SHKEY)||"[]");
+    arr.push(d);
+    localStorage.setItem(SHKEY, JSON.stringify(arr));
+  }
+
+  function shareWhatsApp() {
+    const rawDate = tripDateDisplay.dataset.raw;
+    if (!rawDate) { alert("Select date first."); return }
+
+    const data = {
+      id: tripId.value,
+      date: rawDate,
+      custName: custName.value, custNo: custNumber.value,
+      driverName: driverName.value, driverNo: driverNumber.value,
+      model: vehicleModel.value, vehicleNo: vehicleNo.value,
+      start: startTime.value, end: endTime.value,
+      duration: duration.value, extraH: extraHours.value,
+      totalKM: totalKM.value, extraKM: extraKM.value,
+      parking: parking.value, toll: toll.value, note: note.value
+    };
+
+    const msg = `📋 *TRIP SUMMARY*\n\n*TRIP ID:* ${data.id}\n*DATE:* ${formatDate(data.date)}\n\n`+
+      `👤 *CUSTOMER INFO*\n• *Name:* ${data.custName}\n• *Number:* ${data.custNo}\n\n`+
+      `👨‍✈️ *DRIVER INFO*\n• *Name:* ${data.driverName}\n• *Number:* ${data.driverNo}\n\n`+
+      `🚘 *VEHICLE INFO*\n• *Model:* ${data.model}\n• *Vehicle No:* ${data.vehicleNo}\n\n`+
+      `🕒 *TIME & DISTANCE*\n• *Start Time:* ${to12Hr(data.start)}\n• *End Time:* ${to12Hr(data.end)}\n`+
+      `• *Duration:* ${data.duration} hrs\n• *Extra Hrs:* ${data.extraH}\n`+
+      `• *Total KM:* ${data.totalKM} km\n• *Extra KM:* ${data.extraKM} km\n\n`+
+      `💰 *CHARGES*\n• *Parking:* ₹${data.parking}\n• *Toll:* ₹${data.toll}\n\n`+
+      `📝 *Note:* ${data.note||"-"}`;
+
+    window.open("https://wa.me/?text="+encodeURIComponent(msg), '_blank');
+    recordShare({
+      id: data.id, date: formatDate(data.date),
+      custName: data.custName, custNo: data.custNo,
+      driverName: data.driverName, driverNo: data.driverNo,
+      model: data.model, vehicleNo: data.vehicleNo,
+      start: data.start, end: data.end,
+      duration: data.duration, extraH: data.extraH,
+      totalKM: data.totalKM, extraKM: data.extraKM,
+      parking: data.parking, toll: data.toll, note: data.note
+    });
     reserveNextId();
   }
 
-  loadRates();
+  function showSharedTrips() {
+    const arr = JSON.parse(localStorage.getItem(SHKEY)||"[]");
+    const div = document.getElementById("sharedTripsList");
+    if (!arr.length) { div.innerHTML = "<p>No trips shared.</p>"; return }
+
+    let html = `<h3>📋 Shared Trips History</h3><table><tr>
+<th>ID</th><th>Date</th><th>Cust Name</th><th>Cust No</th><th>Driver</th><th>Driver No</th>
+<th>Model</th><th>Vehicle No</th><th>Start</th><th>End</th><th>Duration</th><th>Extra Hrs</th>
+<th>Total KM</th><th>Extra KM</th><th>Parking₹</th><th>Toll₹</th><th>Note</th></tr>`;
+    arr.forEach(r => {
+      html += `<tr><td>${r.id}</td><td>${r.date}</td><td>${r.custName}</td><td>${r.custNo}</td><td>${r.driverName}</td><td>${r.driverNo}</td><td>${r.model}</td><td>${r.vehicleNo}</td><td>${to12Hr(r.start)}</td><td>${to12Hr(r.end)}</td><td>${r.duration}</td><td>${r.extraH}</td><td>${r.totalKM}</td><td>${r.extraKM}</td><td>${r.parking}</td><td>${r.toll}</td><td>${r.note||"-"}</td></tr>`;
+    });
+    div.innerHTML = html+"</table>";
+  }
+
+  function exportSharedTrips() {
+    const arr = JSON.parse(localStorage.getItem(SHKEY)||"[]");
+    if (!arr.length) { alert("No trips to export."); return }
+    const ws = XLSX.utils.json_to_sheet(arr);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "SharedTrips");
+    XLSX.writeFile(wb, "NST_Shared_Trips.xlsx");
+  }
+
+  function loginAdmin() {
+    const user = adminUser.value.trim(), pass = adminPass.value.trim();
+    if (user==="admin" && pass==="1234") {
+      window.location.href = "admin.html";
+    } else {
+      alert("❌ Invalid credentials");
+    }
+  }
+
+  tripDate.addEventListener("change", () => {
+    const raw = tripDate.value, d=new Date(raw);
+    tripDateDisplay.value = d.toLocaleDateString("en-GB", {day:'2-digit',month:'long',year:'numeric',timeZone:'Asia/Kolkata'});
+    tripDateDisplay.dataset.raw = raw;
+  });
+
+  loadVehicleRates();
   tripId.value = genId();
 </script>
 
-</body>
-</html>
+</body></html>

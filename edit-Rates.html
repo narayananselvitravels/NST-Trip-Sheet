@@ -1,45 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Edit Rate Card – NST</title>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Rates – NST</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
     h2 { color: #4b2aad; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-    th { background: #4b2aad; color: white; }
-    input[type=number] { width: 100%; padding: 8px; font-size: 14px; }
-    button {
-      background: #4b2aad; color: white; border: none; padding: 12px 20px;
-      border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 20px;
-    }
-    button:hover { background: #3a208b; }
+    input { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; }
+    label { font-weight: 600; }
+    button { padding: 12px 20px; background: #4b2aad; color: white; border: none; border-radius: 5px; cursor: pointer }
+    button:hover { background: #3a208b }
+    .box { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
   </style>
 </head>
 <body>
+  <h2>✏️ Edit Vehicle Rates</h2>
 
-  <h2>✏️ Edit Vehicle Rate Card</h2>
+  <form onsubmit="saveRates(); return false;">
+    <div class="box">
+      <h3>🚘 Innova Crysta</h3>
+      <label>Package ₹</label><input id="crysta_package" type="number">
+      <label>Extra Hour ₹</label><input id="crysta_extraHr" type="number">
+      <label>Extra KM ₹</label><input id="crysta_extraKm" type="number">
+      <label>Free KM</label><input id="crysta_freeKm" type="number">
+      <label>Free Hours</label><input id="crysta_freeHrs" type="number">
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Model</th>
-        <th>Package ₹</th>
-        <th>Extra Hr ₹</th>
-        <th>Extra KM ₹</th>
-        <th>Free KM</th>
-        <th>Free Hrs</th>
-      </tr>
-    </thead>
-    <tbody id="rateTable">
-      <!-- JS will populate rows -->
-    </tbody>
-  </table>
+    <div class="box">
+      <h3>🚘 Innova Hycross</h3>
+      <label>Package ₹</label><input id="hycross_package" type="number">
+      <label>Extra Hour ₹</label><input id="hycross_extraHr" type="number">
+      <label>Extra KM ₹</label><input id="hycross_extraKm" type="number">
+      <label>Free KM</label><input id="hycross_freeKm" type="number">
+      <label>Free Hours</label><input id="hycross_freeHrs" type="number">
+    </div>
 
-  <button onclick="saveRates()">💾 Save Changes</button>
+    <div class="box">
+      <h3>🚐 Force Urbania</h3>
+      <label>Package ₹</label><input id="urbania_package" type="number">
+      <label>Extra Hour ₹</label><input id="urbania_extraHr" type="number">
+      <label>Extra KM ₹</label><input id="urbania_extraKm" type="number">
+      <label>Free KM</label><input id="urbania_freeKm" type="number">
+      <label>Free Hours</label><input id="urbania_freeHrs" type="number">
+    </div>
+
+    <button type="submit">💾 Save Rates</button>
+  </form>
 
   <script>
     const defaultRates = {
@@ -48,37 +55,53 @@
       "Force Urbania": { package: 9500, extraHr: 1500, extraKm: 26, freeKm: 70, freeHrs: 7 }
     };
 
-    function loadRates() {
-      const saved = JSON.parse(localStorage.getItem("vehicle-packages") || "null") || defaultRates;
-      const tbody = document.getElementById("rateTable");
-      tbody.innerHTML = "";
-
-      for (const [model, values] of Object.entries(saved)) {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${model}</td>
-          <td><input type="number" value="${values.package}" data-model="${model}" data-field="package"></td>
-          <td><input type="number" value="${values.extraHr}" data-model="${model}" data-field="extraHr"></td>
-          <td><input type="number" value="${values.extraKm}" data-model="${model}" data-field="extraKm"></td>
-          <td><input type="number" value="${values.freeKm}" data-model="${model}" data-field="freeKm"></td>
-          <td><input type="number" value="${values.freeHrs}" data-model="${model}" data-field="freeHrs"></td>
-        `;
-        tbody.appendChild(row);
-      }
+    function saveRates() {
+      const data = {
+        "Innova Crysta": {
+          package: +crysta_package.value,
+          extraHr: +crysta_extraHr.value,
+          extraKm: +crysta_extraKm.value,
+          freeKm: +crysta_freeKm.value,
+          freeHrs: +crysta_freeHrs.value
+        },
+        "Innova Hycross": {
+          package: +hycross_package.value,
+          extraHr: +hycross_extraHr.value,
+          extraKm: +hycross_extraKm.value,
+          freeKm: +hycross_freeKm.value,
+          freeHrs: +hycross_freeHrs.value
+        },
+        "Force Urbania": {
+          package: +urbania_package.value,
+          extraHr: +urbania_extraHr.value,
+          extraKm: +urbania_extraKm.value,
+          freeKm: +urbania_freeKm.value,
+          freeHrs: +urbania_freeHrs.value
+        }
+      };
+      localStorage.setItem("vehicle-packages", JSON.stringify(data));
+      alert("✅ Rates saved!");
     }
 
-    function saveRates() {
-      const inputs = document.querySelectorAll("#rateTable input");
-      const data = {};
-      inputs.forEach(input => {
-        const model = input.dataset.model;
-        const field = input.dataset.field;
-        const value = +input.value;
-        if (!data[model]) data[model] = {};
-        data[model][field] = value;
-      });
-      localStorage.setItem("vehicle-packages", JSON.stringify(data));
-      alert("✅ Vehicle rates saved successfully.");
+    function loadRates() {
+      const r = JSON.parse(localStorage.getItem("vehicle-packages") || JSON.stringify(defaultRates));
+      crysta_package.value = r["Innova Crysta"].package;
+      crysta_extraHr.value = r["Innova Crysta"].extraHr;
+      crysta_extraKm.value = r["Innova Crysta"].extraKm;
+      crysta_freeKm.value = r["Innova Crysta"].freeKm;
+      crysta_freeHrs.value = r["Innova Crysta"].freeHrs;
+
+      hycross_package.value = r["Innova Hycross"].package;
+      hycross_extraHr.value = r["Innova Hycross"].extraHr;
+      hycross_extraKm.value = r["Innova Hycross"].extraKm;
+      hycross_freeKm.value = r["Innova Hycross"].freeKm;
+      hycross_freeHrs.value = r["Innova Hycross"].freeHrs;
+
+      urbania_package.value = r["Force Urbania"].package;
+      urbania_extraHr.value = r["Force Urbania"].extraHr;
+      urbania_extraKm.value = r["Force Urbania"].extraKm;
+      urbania_freeKm.value = r["Force Urbania"].freeKm;
+      urbania_freeHrs.value = r["Force Urbania"].freeHrs;
     }
 
     loadRates();

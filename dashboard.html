@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NST Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; padding: 20px; max-width: 900px; margin: auto }
+    h2 { color: #4b2aad; margin-bottom: 20px }
+    .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px }
+    .stat { background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ddd }
+    .stat h3 { margin: 0; font-size: 28px; color: #4b2aad }
+    .stat p { margin: 5px 0 0; font-weight: 600 }
+    canvas { max-width: 100%; }
+    button { background: #4b2aad; color: #fff; padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>📊 NST Trip Dashboard</h2>
+
+  <div class="card">
+    <div class="stats-grid">
+      <div class="stat">
+        <h3 id="totalTrips">0</h3>
+        <p>Total Trips</p>
+      </div>
+      <div class="stat">
+        <h3 id="totalKM">0</h3>
+        <p>Total KM</p>
+      </div>
+      <div class="stat">
+        <h3 id="totalEarnings">₹0</h3>
+        <p>Total Earnings</p>
+      </div>
+      <div class="stat">
+        <h3 id="uniqueVehicles">0</h3>
+        <p>Vehicle Models</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🚘 Trip Count per Vehicle Model</h3>
+    <canvas id="vehicleChart" height="150"></canvas>
+  </div>
+
+  <div style="text-align:center;margin-top:30px">
+    <button onclick="window.location.href='index.html'">🔙 Back to Trip Sheet</button>
+  </div>
+
+  <script>
+    const tripData = JSON.parse(localStorage.getItem("shared-trips") || "[]");
+
+    // Total trips
+    document.getElementById("totalTrips").textContent = tripData.length;
+
+    // Total KM
+    let totalKM = tripData.reduce((sum, t) => sum + (+t.totalKM || 0), 0);
+    document.getElementById("totalKM").textContent = totalKM + " km";
+
+    // Total Earnings (package + extra hrs + extra km + toll + parking)
+    const rates = JSON.parse(localStorage.getItem("vehicle-packages") || "{}");
+    let totalEarnings = 0;
+
+    for (let trip of tripData) {
+      const rate = rates[trip.model] || {};
+      const pkg = rate.package || 0;
+      const hrRate = rate.extraHr || 0;
+      const kmRate = rate.extraKm || 0;
+
+      const extraHrCost = (parseInt(trip.extraH) || 0) * hrRate;
+      const extraKmCost = (parseInt(trip.extraKM) || 0) * kmRate;
+      const toll = parseInt(trip.toll) || 0;
+      const park = parseInt(trip.parking) || 0;
+
+      totalEarnings += pkg + extraHrCost + extraKmCost + toll + park;
+    }
+
+    document.getElementById("totalEarnings").textContent = "₹" + totalEarnings.toLocaleString();
+
+    // Trip count by model
+    const modelCounts = {};
+    for (let trip of tripData) {
+      modelCounts[trip.model] = (modelCounts[trip.model] || 0) + 1;
+    }
+
+    const labels = Object.keys(modelCounts);
+    const counts = Object.values(modelCounts);
+
+    document.getElementById("uniqueVehicles").textContent = labels.length;
+
+    // Chart.js
+    const ctx = document.getElementById('vehicleChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Trip Count',
+          data: counts,
+          backgroundColor: ['#4b2aad','#6a3bd7','#8c62ff','#9d7fff','#baa6ff']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: { display: false }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

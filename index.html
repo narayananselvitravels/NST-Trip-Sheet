@@ -44,8 +44,7 @@
   <label>Trip ID</label><input id="tripId" readonly>
 
   <label>Date</label>
-  <input type="date" id="tripDatePicker" onchange="updateDisplayDate()">
-  <input id="tripDateDisplay" readonly>
+  <input type="text" id="tripDate" onclick="pickDate()" placeholder="Select Date" readonly>
 
   <label>Customer Name</label><input id="custName">
   <label>Customer Number</label><input id="custNumber">
@@ -104,14 +103,23 @@
       tripId.value = genId();
     }
 
-    function updateDisplayDate() {
-      const picker = document.getElementById("tripDatePicker");
-      const display = document.getElementById("tripDateDisplay");
-      const date = new Date(picker.value);
-      display.value = date.toLocaleDateString('en-GB', {
-        day: '2-digit', month: 'long', year: 'numeric',
-        timeZone: 'Asia/Kolkata'
-      });
+    function pickDate() {
+      const input = document.createElement("input");
+      input.type = "date";
+      input.style.position = "absolute";
+      input.style.opacity = 0;
+      document.body.appendChild(input);
+      input.onchange = () => {
+        const date = new Date(input.value);
+        const display = date.toLocaleDateString("en-GB", {
+          day: '2-digit', month: 'long', year: 'numeric',
+          timeZone: 'Asia/Kolkata'
+        });
+        tripDate.value = display;
+        tripDate.dataset.raw = input.value;
+        document.body.removeChild(input);
+      };
+      input.click();
     }
 
     function formatDate(dateStr) {
@@ -169,7 +177,8 @@
     }
 
     function shareWhatsApp() {
-      const msg = `📋 *TRIP SUMMARY*\n*Trip ID:* ${tripId.value}\n*Date:* ${formatDate(tripDatePicker.value)}
+      const rawDate = document.getElementById("tripDate").dataset.raw;
+      const msg = `📋 *TRIP SUMMARY*\n*Trip ID:* ${tripId.value}\n*Date:* ${formatDate(rawDate)}
 
 👤 *Customer:* ${custName.value} (${custNumber.value})
 👨‍✈️ *Driver:* ${driverName.value} (${driverNumber.value})
@@ -195,8 +204,6 @@
 
     // Initialize on load
     tripId.value = genId();
-    tripDatePicker.valueAsDate = new Date();
-    updateDisplayDate();
   </script>
 </body>
 </html>

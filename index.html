@@ -5,257 +5,202 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NST Trip Sheet</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; padding: 20px; max-width: 800px; margin: auto; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f6f9; padding: 20px; max-width: 800px; margin: auto; }
     h2 { color: #4b2aad; }
-    label { font-weight: bold; display: block; margin-top: 10px; }
+    label { font-weight: bold; margin-top: 10px; display: block; }
     input, select, textarea, button {
-      width: 100%; padding: 10px; margin-top: 5px; font-size: 16px;
+      width: 100%; padding: 10px; margin: 5px 0 15px 0; font-size: 16px;
       border-radius: 5px; border: 1px solid #ccc;
     }
-    button { background: #4b2aad; color: white; border: none; margin-top: 15px; cursor: pointer; }
+    button { background: #4b2aad; color: white; border: none; cursor: pointer; margin-top: 10px; }
     button:hover { background: #3a1e95; }
-    .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
   </style>
 </head>
 <body>
 
 <h2>📝 NST Trip Sheet</h2>
 
-<label>Trip ID</label>
-<input id="tripId" readonly />
+<label>Trip ID</label><input id="tripId" readonly>
 
-<label>Date</label>
-<input type="date" id="tripDate" />
+<label>Date</label><input type="date" id="tripDate">
 
-<label>Customer Name</label>
-<input id="custName" />
-
-<label>Customer Number</label>
-<input id="custNumber" />
+<label>Customer Name</label><input id="custName">
+<label>Customer Number</label><input id="custNumber">
 
 <label>Driver Name</label>
 <select id="driverName" onchange="syncDriver(true)">
   <option value="">-- Select --</option>
-  <option>Perumal</option>
-  <option>Siva</option>
+  <option>Perumal</option><option>Siva</option>
 </select>
 
 <label>Driver Mobile No</label>
 <select id="driverNumber" onchange="syncDriver(false)">
   <option value="">-- Select --</option>
-  <option>9699994563</option>
-  <option>9551208961</option>
+  <option>9699994563</option><option>9551208961</option>
 </select>
 
 <label>Vehicle Model</label>
 <select id="vehicleModel" onchange="syncVehicle(true)">
   <option value="">-- Select --</option>
-  <option>Innova Crysta</option>
-  <option>Innova Hycross</option>
-  <option>Force Urbania</option>
+  <option>Innova Crysta</option><option>Innova Hycross</option><option>Force Urbania</option>
 </select>
 
 <label>Vehicle Number</label>
 <select id="vehicleNo" onchange="syncVehicle(false)">
   <option value="">-- Select --</option>
-  <option>PY05N0505</option>
-  <option>PY01DB1007</option>
-  <option>TN14AP2084</option>
+  <option>PY05N0505</option><option>PY01DB1007</option><option>TN14AP2084</option>
 </select>
 
-<label>Start Time</label>
-<input type="time" id="startTime" onchange="recalc()" />
+<label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
+<label>End Time</label><input type="time" id="endTime" onchange="recalc()">
+<label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
+<label>End KM</label><input type="number" id="endKM" onchange="recalc()">
 
-<label>End Time</label>
-<input type="time" id="endTime" onchange="recalc()" />
+<label>Duration (hrs)</label><input id="duration" readonly>
+<label>Extra Hours</label><input id="extraHours" readonly>
+<label>Total KM</label><input id="totalKM" readonly>
+<label>Extra KM</label><input id="extraKM" readonly>
 
-<label>Start KM</label>
-<input type="number" id="startKM" onchange="recalc()" />
+<label>Parking ₹</label><input type="number" id="parking" value="0" onchange="recalc()">
+<label>Toll ₹</label><input type="number" id="toll" value="0" onchange="recalc()">
+<label>Note</label><textarea id="note" rows="3"></textarea>
 
-<label>End KM</label>
-<input type="number" id="endKM" onchange="recalc()" />
+<button onclick="shareTrip()">📤 Share WhatsApp & Next Trip</button>
 
-<label>Duration (hrs)</label>
-<input id="duration" readonly />
-<label>Extra Hours</label>
-<input id="extraHours" readonly />
-<label>Total KM</label>
-<input id="totalKM" readonly />
-<label>Extra KM</label>
-<input id="extraKM" readonly />
-
-<label>Parking ₹</label>
-<input type="number" id="parking" value="0" onchange="recalc()" />
-<label>Toll ₹</label>
-<input type="number" id="toll" value="0" onchange="recalc()" />
-
-<label>Note</label>
-<textarea id="note" rows="3"></textarea>
-
-<div class="btn-group">
-  <button onclick="shareTrip()">📤 Share WhatsApp</button>
-</div>
-
-<input type="hidden" id="packageCost" />
-<input type="hidden" id="extraHrCost" />
-<input type="hidden" id="extraKmCost" />
+<input type="hidden" id="freeKm" />
 <input type="hidden" id="eHr" />
 <input type="hidden" id="eKm" />
-<input type="hidden" id="freeKm" />
 
 <script>
-const RKEY = "nst-rates";
-let rates = JSON.parse(localStorage.getItem(RKEY)) || {
-  "Innova Crysta": { pkg: 7500, hr: 1000, km: 20, free: 80, no: "PY05N0505" },
-  "Innova Hycross": { pkg: 8500, hr: 1200, km: 24, free: 60, no: "PY01DB1007" },
-  "Force Urbania": { pkg: 9500, hr: 1500, km: 26, free: 70, no: "TN14AP2084" }
-};
+  // Vehicle rate mapping
+  const rates = {
+    "Innova Crysta": { no: "PY05N0505", free: 100 },
+    "Innova Hycross": { no: "PY01DB1007", free: 80 },
+    "Force Urbania": { no: "TN14AP2084", free: 90 }
+  };
 
-const drivers = {
-  "Perumal": "9699994563",
-  "Siva": "9551208961"
-};
+  // Driver mapping
+  const drivers = {
+    "Perumal": "9699994563",
+    "Siva": "9551208961"
+  };
 
-function genTripId() {
-  let shared = JSON.parse(localStorage.getItem("nst-shared") || "[]");
-  for (let i = 1; i <= 999; i++) {
-    let id = "#NST" + String(i).padStart(3, '0');
-    if (!shared.find(t => t.id === id)) return id;
-  }
-  return "#NST999";
-}
-
-tripId.value = genTripId();
-
-function syncVehicle(fromModel) {
-  if (fromModel) {
-    let model = vehicleModel.value;
-    if (rates[model]) {
-      vehicleNo.value = rates[model].no;
-      packageCost.value = rates[model].pkg;
-      eHr.value = rates[model].hr;
-      eKm.value = rates[model].km;
-      freeKm.value = rates[model].free;
-    }
-  } else {
-    let no = vehicleNo.value;
-    for (let model in rates) {
-      if (rates[model].no === no) {
-        vehicleModel.value = model;
-        syncVehicle(true);
-        break;
-      }
+  // Generate next Trip ID not used
+  function genTripId() {
+    let shared = JSON.parse(localStorage.getItem("nst-shared") || "[]");
+    let i = 1;
+    while (true) {
+      let id = "#NST" + String(i).padStart(3, "0");
+      if (!shared.some(t => t.id === id)) return id;
+      i++;
     }
   }
-  recalc();
-}
-
-function syncDriver(fromName) {
-  if (fromName) {
-    driverNumber.value = drivers[driverName.value] || "";
-  } else {
-    for (let name in drivers) {
-      if (drivers[name] === driverNumber.value) {
-        driverName.value = name;
-        break;
-      }
-    }
-  }
-}
-
-function recalc() {
-  let sTime = startTime.value, eTime = endTime.value;
-  if (sTime && eTime) {
-    let s = new Date(`1970-01-01T${sTime}`);
-    let e = new Date(`1970-01-01T${eTime}`);
-    let diff = (e - s) / 3600000;
-    if (diff < 0) diff += 24;
-    let hrs = Math.ceil(diff);
-    duration.value = hrs;
-    extraHours.value = hrs > 8 ? hrs - 8 : 0;
-  }
-
-  let totKm = endKM.value - startKM.value;
-  totalKM.value = totKm;
-
-  let free = parseFloat(freeKm.value) || 0;
-  let extra = totKm > free ? totKm - free : 0;
-  extraKM.value = extra;
-
-  extraHrCost.value = (extraHours.value || 0) * eHr.value;
-  extraKmCost.value = extra * eKm.value;
-}
-
-function formatTime12(t) {
-  let [h, m] = t.split(":");
-  h = +h;
-  let ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `${h}:${m} ${ampm}`;
-}
-
-function formatDateSlash(d) {
-  const dt = new Date(d);
-  return `${String(dt.getDate()).padStart(2, '0')}-${String(dt.getMonth() + 1).padStart(2, '0')}-${dt.getFullYear()}`;
-}
-
-function shareTrip() {
-  let id = tripId.value;
-  let date = formatDateSlash(tripDate.value);
-  let cust = custName.value;
-  let custNum = custNumber.value;
-  let driver = driverName.value;
-  let driverNum = driverNumber.value;
-  let model = vehicleModel.value;
-  let no = vehicleNo.value;
-  let start = formatTime12(startTime.value);
-  let end = formatTime12(endTime.value);
-  let hrs = duration.value;
-  let ehrs = extraHours.value;
-  let tkm = totalKM.value;
-  let ekm = extraKM.value;
-  let park = parking.value;
-  let tollAmt = toll.value;
-  let noteText = note.value || "-";
-
-  let msg = `📋 *TRIP SUMMARY*
-
-*TRIP ID:* ${id}
-*DATE:* ${date}
-
-👤 *CUSTOMER INFO*
-• Name: ${cust}
-• Number: ${custNum}
-
-👨‍✈️ *DRIVER INFO*
-• Name: ${driver}
-• Number: ${driverNum}
-
-🚘 *VEHICLE INFO*
-• Model: ${model}
-• Vehicle No: ${no}
-
-🕒 *TIME & DISTANCE*
-• Start Time: ${start}
-• End Time: ${end}
-• Duration: ${hrs} hrs
-• Extra Hrs: ${ehrs}
-• Total KM: ${tkm} km
-• Extra KM: ${ekm} km
-
-💰 *CHARGES*
-• Parking: ₹${park}
-• Toll: ₹${tollAmt}
-
-📝 *Note:* ${noteText}`;
-
-  let shared = JSON.parse(localStorage.getItem("nst-shared") || "[]");
-  shared.push({ id });
-  localStorage.setItem("nst-shared", JSON.stringify(shared));
 
   tripId.value = genTripId();
-  window.open("https://wa.me/?text=" + encodeURIComponent(msg));
-}
+
+  function syncVehicle(fromModel) {
+    if (fromModel) {
+      let model = vehicleModel.value;
+      if (rates[model]) {
+        vehicleNo.value = rates[model].no;
+        freeKm.value = rates[model].free;
+      }
+    } else {
+      let no = vehicleNo.value;
+      for (let m in rates) {
+        if (rates[m].no === no) {
+          vehicleModel.value = m;
+          syncVehicle(true);
+          break;
+        }
+      }
+    }
+    recalc();
+  }
+
+  function syncDriver(fromName) {
+    if (fromName) {
+      driverNumber.value = drivers[driverName.value] || "";
+    } else {
+      for (let n in drivers) {
+        if (drivers[n] === driverNumber.value) {
+          driverName.value = n;
+          break;
+        }
+      }
+    }
+  }
+
+  function recalc() {
+    if (startTime.value && endTime.value) {
+      let s = new Date(`1970-01-01T${startTime.value}`);
+      let e = new Date(`1970-01-01T${endTime.value}`);
+      let diff = (e - s) / 3600000;
+      if (diff < 0) diff += 24;
+      let hrs = Math.ceil(diff);
+      duration.value = hrs;
+      extraHours.value = hrs > 8 ? hrs - 8 : 0;
+    }
+
+    let start = parseFloat(startKM.value) || 0;
+    let end = parseFloat(endKM.value) || 0;
+    let tot = end - start;
+    totalKM.value = tot;
+
+    let free = parseFloat(freeKm.value) || 0;
+    extraKM.value = tot > free ? tot - free : 0;
+  }
+
+  function shareTrip() {
+    const data = {
+      id: tripId.value,
+      custName: custName.value,
+      custNum: custNumber.value,
+      driverName: driverName.value,
+      driverNum: driverNumber.value,
+      model: vehicleModel.value,
+      no: vehicleNo.value,
+      start: startTime.value,
+      end: endTime.value,
+      duration: duration.value,
+      extraHrs: extraHours.value,
+      totalKM: totalKM.value,
+      extraKM: extraKM.value,
+      parking: parking.value,
+      toll: toll.value,
+      note: note.value || "-"
+    };
+
+    const format12 = t => {
+      const [h,m] = t.split(':'); let hh = +h; const suffix = hh >= 12 ? 'PM' : 'AM';
+      hh = hh % 12 || 12;
+      return `${hh}:${m} ${suffix}`;
+    };
+
+    const formatDate = d => {
+      const dt = new Date(d);
+      return `${String(dt.getDate()).padStart(2,'0')}-${String(dt.getMonth()+1).padStart(2,'0')}-${dt.getFullYear()}`;
+    };
+
+    const msg = `📋 *TRIP SUMMARY*\n\n*TRIP ID:* ${data.id}\n*DATE:* ${formatDate(tripDate.value)}\n\n` +
+      `👤 CUSTOMER INFO\n• Name: ${data.custName}\n• Number: ${data.custNum}\n\n` +
+      `👨‍✈️ DRIVER INFO\n• Name: ${data.driverName}\n• Number: ${data.driverNum}\n\n` +
+      `🚘 VEHICLE INFO\n• Model: ${data.model}\n• Vehicle No: ${data.no}\n\n` +
+      `🕒 TIME & DISTANCE\n• Start Time: ${format12(data.start)}\n• End Time: ${format12(data.end)}\n` +
+      `• Duration: ${data.duration} hrs\n• Extra Hrs: ${data.extraHrs}\n` +
+      `• Total KM: ${data.totalKM} km\n• Extra KM: ${data.extraKM} km\n\n` +
+      `💰 CHARGES\n• Parking: ₹${data.parking}\n• Toll: ₹${data.toll}\n\n` +
+      `📝 Note: ${data.note}`;
+
+    // Save shared trip
+    let shared = JSON.parse(localStorage.getItem("nst-shared") || "[]");
+    shared.push({ id: data.id });
+    localStorage.setItem("nst-shared", JSON.stringify(shared));
+
+    window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+
+    tripId.value = genTripId();
+  }
 </script>
 
 </body>

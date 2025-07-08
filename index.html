@@ -80,6 +80,7 @@
   </div>
 
   <input type="hidden" id="freeKm">
+
   <script>
     const rates = {
       "Innova Crysta": { free: 80, no: "PY05N0505" },
@@ -88,11 +89,15 @@
     };
 
     function genId() {
-      const now = new Date();
       let n = parseInt(localStorage.getItem("trip-seq") || "1");
-      while (localStorage.getItem("#NST" + String(n).padStart(3, "0"))) n++;
-      localStorage.setItem("trip-seq", n);
       return "#NST" + String(n).padStart(3, "0");
+    }
+
+    function reserveNextId() {
+      let current = parseInt(localStorage.getItem("trip-seq") || "1");
+      localStorage.setItem("#NST" + String(current).padStart(3, "0"), "used");
+      localStorage.setItem("trip-seq", current + 1);
+      tripId.value = genId();
     }
 
     function formatDate(dateStr) {
@@ -167,6 +172,13 @@
 📝 *Note:* ${note.value || "-"}`;
 
       window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
+
+      // Ask user if sent
+      setTimeout(() => {
+        if (confirm("✅ Did you successfully send the WhatsApp message?")) {
+          reserveNextId(); // Only if confirmed
+        }
+      }, 1000);
     }
 
     tripId.value = genId();

@@ -1,107 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Driver & Vehicle Master</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Driver & Vehicle Master – NST</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
-    h2 { color: #4b2aad; }
-    .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    input { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
-    button { padding: 10px 20px; background: #4b2aad; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
-    button:hover { background: #3a208b; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #4b2aad; color: white; }
-    .danger { background: #dc3545; }
-    .danger:hover { background: #b02a37; }
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; padding: 20px; max-width: 600px; margin: auto; }
+    h2 { color: #4b2aad }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #4b2aad; color: white; font-weight: bold; cursor: pointer; }
+    button:hover { background: #3a208b }
+    hr { margin: 30px 0 }
   </style>
 </head>
 <body>
 
-<h2>🧑‍✈️ Driver & 🚘 Vehicle Master</h2>
+<h2>🛠 Driver & Vehicle Master</h2>
 
-<div class="section">
-  <h3>➕ Add Driver</h3>
-  <input type="text" id="driverNameInput" placeholder="Driver Name">
-  <input type="text" id="driverPhoneInput" placeholder="Driver Phone">
-  <button onclick="addDriver()">Add Driver</button>
-  <div id="driverTable"></div>
-</div>
+<!-- Driver Form -->
+<label>Driver Name</label>
+<input id="driverName" placeholder="Enter driver name">
 
-<div class="section">
-  <h3>➕ Add Vehicle</h3>
-  <input type="text" id="vehicleModelInput" placeholder="Vehicle Model">
-  <input type="text" id="vehicleNumberInput" placeholder="Vehicle Number">
-  <button onclick="addVehicle()">Add Vehicle</button>
-  <div id="vehicleTable"></div>
-</div>
+<label>Mobile Number</label>
+<input id="driverMobile" placeholder="Enter driver mobile">
+
+<button onclick="saveDriver()">💾 Save Driver</button>
+
+<hr>
+
+<!-- Vehicle Form -->
+<label>Vehicle Model</label>
+<input id="vehicleModel" placeholder="Enter vehicle model">
+
+<label>Vehicle Number</label>
+<input id="vehicleNumber" placeholder="Enter vehicle number">
+
+<button onclick="saveVehicle()">💾 Save Vehicle</button>
 
 <script>
-  function loadTables() {
-    const drivers = JSON.parse(localStorage.getItem("drivers") || "[]");
-    const vehicles = JSON.parse(localStorage.getItem("vehicles") || "[]");
+  function saveDriver() {
+    const name = driverName.value.trim();
+    const mobile = driverMobile.value.trim();
+    if (!name || !mobile) return alert("Please fill driver details.");
 
-    // Render Drivers
-    let dTable = "<table><tr><th>Name</th><th>Phone</th><th>Action</th></tr>";
-    drivers.forEach((d, i) => {
-      dTable += `<tr><td>${d.name}</td><td>${d.phone}</td><td><button class="danger" onclick="deleteDriver(${i})">Delete</button></td></tr>`;
-    });
-    dTable += "</table>";
-    document.getElementById("driverTable").innerHTML = dTable;
-
-    // Render Vehicles
-    let vTable = "<table><tr><th>Model</th><th>Number</th><th>Action</th></tr>";
-    vehicles.forEach((v, i) => {
-      vTable += `<tr><td>${v.model}</td><td>${v.number}</td><td><button class="danger" onclick="deleteVehicle(${i})">Delete</button></td></tr>`;
-    });
-    vTable += "</table>";
-    document.getElementById("vehicleTable").innerHTML = vTable;
+    let list = JSON.parse(localStorage.getItem("driver-master") || "[]");
+    list.push({ name, mobile });
+    localStorage.setItem("driver-master", JSON.stringify(list));
+    alert("✅ Driver saved.");
+    driverName.value = driverMobile.value = "";
   }
 
-  function addDriver() {
-    const name = driverNameInput.value.trim();
-    const phone = driverPhoneInput.value.trim();
-    if (!name || !phone) return alert("Please enter both driver name and phone.");
+  function saveVehicle() {
+    const model = vehicleModel.value.trim();
+    const number = vehicleNumber.value.trim();
+    if (!model || !number) return alert("Please fill vehicle details.");
 
-    let drivers = JSON.parse(localStorage.getItem("drivers") || "[]");
-    drivers.push({ name, phone });
-    localStorage.setItem("drivers", JSON.stringify(drivers));
-    driverNameInput.value = "";
-    driverPhoneInput.value = "";
-    loadTables();
+    let list = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
+    list.push({ model, number });
+    localStorage.setItem("vehicle-master", JSON.stringify(list));
+    alert("✅ Vehicle saved.");
+    vehicleModel.value = vehicleNumber.value = "";
   }
-
-  function addVehicle() {
-    const model = vehicleModelInput.value.trim();
-    const number = vehicleNumberInput.value.trim();
-    if (!model || !number) return alert("Please enter both vehicle model and number.");
-
-    let vehicles = JSON.parse(localStorage.getItem("vehicles") || "[]");
-    vehicles.push({ model, number });
-    localStorage.setItem("vehicles", JSON.stringify(vehicles));
-    vehicleModelInput.value = "";
-    vehicleNumberInput.value = "";
-    loadTables();
-  }
-
-  function deleteDriver(index) {
-    let drivers = JSON.parse(localStorage.getItem("drivers") || "[]");
-    drivers.splice(index, 1);
-    localStorage.setItem("drivers", JSON.stringify(drivers));
-    loadTables();
-  }
-
-  function deleteVehicle(index) {
-    let vehicles = JSON.parse(localStorage.getItem("vehicles") || "[]");
-    vehicles.splice(index, 1);
-    localStorage.setItem("vehicles", JSON.stringify(vehicles));
-    loadTables();
-  }
-
-  loadTables();
 </script>
 
 </body>

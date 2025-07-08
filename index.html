@@ -7,11 +7,18 @@
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; max-width: 800px; margin: auto; }
     label { font-weight: bold; display: block; margin-top: 10px; }
-    input, select, button { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
+    input, select, button, textarea {
+      width: 100%; padding: 10px; font-size: 16px; margin-top: 5px;
+      border-radius: 5px; border: 1px solid #ccc;
+    }
     button { background: #4b2aad; color: white; border: none; margin-top: 15px; cursor: pointer; }
     button:hover { background: #3a1d91; }
     .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
-    .popup { display: none; position: fixed; top: 10%; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 9999; }
+    .popup {
+      display: none; position: fixed; top: 10%; left: 5%; width: 90%;
+      background: white; padding: 20px; border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 9999;
+    }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background: #4b2aad; color: white; }
@@ -22,7 +29,7 @@
 <h2>📝 NST Trip Sheet</h2>
 
 <label>Vehicle Model</label>
-<select id="vehicleModel" onchange="syncVehicle(true)">
+<select id="vehicleModel" onchange="sync(true)">
   <option value="">-- Select --</option>
   <option>Innova Crysta</option>
   <option>Innova Hycross</option>
@@ -30,7 +37,7 @@
 </select>
 
 <label>Vehicle Number</label>
-<select id="vehicleNo" onchange="syncVehicle(false)">
+<select id="vehicleNo" onchange="sync(false)">
   <option value="">-- Select --</option>
   <option>PY05N0505</option>
   <option>PY01DB1007</option>
@@ -65,58 +72,61 @@
 <input type="hidden" id="freeHr">
 
 <div class="btn-group">
-  <button onclick="openEditPackagePopup()">✏️ Edit Package Limits</button>
+  <button onclick="openEditPackagePopup()">✏️ Edit Package</button>
 </div>
 
-<!-- Edit Popup -->
+<!-- Edit Package Popup -->
 <div class="popup" id="editPackagePopup">
   <h3>✏️ Edit Package Limits</h3>
   <table>
-    <thead>
-      <tr><th>Model</th><th>Free KM</th><th>Free Hrs</th></tr>
-    </thead>
+    <thead><tr><th>Model</th><th>Free KM</th><th>Free Hr</th></tr></thead>
     <tbody id="editPackageTable"></tbody>
   </table>
   <button onclick="savePackageLimits()">Save</button>
-  <button onclick="document.getElementById('editPackagePopup').style.display='none'">Close</button>
+  <button onclick="document.getElementById('editPackagePopup').style.display='none'">Cancel</button>
 </div>
 
 <script>
-let vehicles = {
-  "Innova Crysta": "PY05N0505",
-  "Innova Hycross": "PY01DB1007",
-  "Force Urbania": "TN14AP2084"
+const vehicleModel = document.getElementById("vehicleModel");
+const vehicleNo = document.getElementById("vehicleNo");
+const freeKm = document.getElementById("freeKm");
+const freeHr = document.getElementById("freeHr");
+
+let rates = {
+  "Innova Crysta": { no: "PY05N0505" },
+  "Innova Hycross": { no: "PY01DB1007" },
+  "Force Urbania": { no: "TN14AP2084" }
 };
 
+// Model-specific package limits (free KM and hours)
 let pricing = {
   "Innova Crysta": { freeKm: 80, freeHr: 8 },
   "Innova Hycross": { freeKm: 90, freeHr: 6 },
   "Force Urbania": { freeKm: 70, freeHr: 7 }
 };
 
-const saved = localStorage.getItem("nst-pricing");
-if (saved) pricing = JSON.parse(saved);
+// Load from localStorage if exists
+const savedPricing = localStorage.getItem("nst-pricing");
+if (savedPricing) pricing = JSON.parse(savedPricing);
 
-function syncVehicle(fromModel) {
+function sync(fromModel) {
   if (fromModel) {
-    let model = document.getElementById("vehicleModel").value;
-    document.getElementById("vehicleNo").value = vehicles[model] || "";
+    const model = vehicleModel.value;
+    if (rates[model]) {
+      vehicleNo.value = rates[model].no;
+      freeKm.value = pricing[model]?.freeKm || 0;
+      freeHr.value = pricing[model]?.freeHr || 0;
+    }
   } else {
-    let no = document.getElementById("vehicleNo").value;
-    for (let model in vehicles) {
-      if (vehicles[model] === no) {
-        document.getElementById("vehicleModel").value = model;
+    const no = vehicleNo.value;
+    for (let model in rates) {
+      if (rates[model].no === no) {
+        vehicleModel.value = model;
+        sync(true);
         break;
       }
     }
   }
-
-  const model = document.getElementById("vehicleModel").value;
-  if (pricing[model]) {
-    document.getElementById("freeKm").value = pricing[model].freeKm;
-    document.getElementById("freeHr").value = pricing[model].freeHr;
-  }
-
   recalc();
 }
 
@@ -125,8 +135,8 @@ function recalc() {
   const endTime = document.getElementById("endTime").value;
   const startKM = +document.getElementById("startKM").value;
   const endKM = +document.getElementById("endKM").value;
-  const freeHr = +document.getElementById("freeHr").value || 0;
-  const freeKm = +document.getElementById("freeKm").value || 0;
+  const freeHrVal = +freeHr.value || 0;
+  const freeKmVal = +freeKm.value || 0;
 
   if (startTime && endTime) {
     let s = new Date(`1970-01-01T${startTime}`);
@@ -135,24 +145,24 @@ function recalc() {
     if (diff < 0) diff += 24;
     const hrs = Math.ceil(diff);
     document.getElementById("duration").value = hrs;
-    document.getElementById("extraHours").value = hrs > freeHr ? hrs - freeHr : 0;
+    document.getElementById("extraHours").value = hrs > freeHrVal ? hrs - freeHrVal : 0;
   }
 
   const totalKM = endKM - startKM;
   document.getElementById("totalKM").value = totalKM;
-  document.getElementById("extraKM").value = totalKM > freeKm ? totalKM - freeKm : 0;
+  document.getElementById("extraKM").value = totalKM > freeKmVal ? totalKM - freeKmVal : 0;
 }
 
 function openEditPackagePopup() {
   const tbody = document.getElementById("editPackageTable");
   tbody.innerHTML = '';
   for (let model in pricing) {
-    let r = pricing[model];
+    const p = pricing[model];
     tbody.innerHTML += `
       <tr>
         <td>${model}</td>
-        <td><input type="number" value="${r.freeKm}" onchange="pricing['${model}'].freeKm=this.value"></td>
-        <td><input type="number" value="${r.freeHr}" onchange="pricing['${model}'].freeHr=this.value"></td>
+        <td><input type="number" value="${p.freeKm}" onchange="pricing['${model}'].freeKm=this.value"></td>
+        <td><input type="number" value="${p.freeHr}" onchange="pricing['${model}'].freeHr=this.value"></td>
       </tr>
     `;
   }
@@ -162,7 +172,7 @@ function openEditPackagePopup() {
 function savePackageLimits() {
   localStorage.setItem("nst-pricing", JSON.stringify(pricing));
   document.getElementById("editPackagePopup").style.display = 'none';
-  syncVehicle(true);
+  sync(true);
 }
 </script>
 

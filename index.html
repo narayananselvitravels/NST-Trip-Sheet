@@ -215,6 +215,36 @@ function loginAdmin() {
 (function init() {
   tripId.value = genId();
 
+  // Replace this line:
+tripId.value = genId();
+
+// With the entire init() function:
+(function init() {
+  tripId.value = genId();
+
+  // Load Drivers
+  let dstore = JSON.parse(localStorage.getItem("driver-master") || "[]");
+  drivers = {};
+  driverName.innerHTML = '<option value="">-- Select --</option>';
+  driverNumber.innerHTML = '<option value="">-- Select --</option>';
+  dstore.forEach(d => {
+    drivers[d.name] = d.mobile;
+    driverName.innerHTML += `<option>${d.name}</option>`;
+    driverNumber.innerHTML += `<option>${d.mobile}</option>`;
+  });
+
+  // Load Vehicles
+  let vstore = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
+  vehicles = {};
+  vehicleModel.innerHTML = '<option value="">-- Select --</option>';
+  vehicleNo.innerHTML = '<option value="">-- Select --</option>';
+  vstore.forEach(v => {
+    vehicles[v.model] = v.number;
+    vehicleModel.innerHTML += `<option>${v.model}</option>`;
+    vehicleNo.innerHTML += `<option>${v.number}</option>`;
+  });
+})();
+
   // Load Drivers from localStorage
   let dstore = JSON.parse(localStorage.getItem("driver-master") || "[]");
   drivers = {}; // reset

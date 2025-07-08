@@ -44,7 +44,7 @@
   <label>Trip ID</label><input id="tripId" readonly>
 
   <label>Date</label>
-  <input type="text" id="tripDate" onclick="pickDate()" placeholder="Select Date" readonly>
+  <input type="text" id="tripDate" placeholder="Select Date" readonly style="cursor: pointer;">
 
   <label>Customer Name</label><input id="custName">
   <label>Customer Number</label><input id="custNumber">
@@ -103,25 +103,6 @@
       tripId.value = genId();
     }
 
-    function pickDate() {
-      const input = document.createElement("input");
-      input.type = "date";
-      input.style.position = "absolute";
-      input.style.opacity = 0;
-      document.body.appendChild(input);
-      input.onchange = () => {
-        const date = new Date(input.value);
-        const display = date.toLocaleDateString("en-GB", {
-          day: '2-digit', month: 'long', year: 'numeric',
-          timeZone: 'Asia/Kolkata'
-        });
-        tripDate.value = display;
-        tripDate.dataset.raw = input.value;
-        document.body.removeChild(input);
-      };
-      input.click();
-    }
-
     function formatDate(dateStr) {
       const d = new Date(dateStr);
       const dd = String(d.getDate()).padStart(2, '0');
@@ -178,6 +159,10 @@
 
     function shareWhatsApp() {
       const rawDate = document.getElementById("tripDate").dataset.raw;
+      if (!rawDate) {
+        alert("Please select a date before sharing.");
+        return;
+      }
       const msg = `📋 *TRIP SUMMARY*\n*Trip ID:* ${tripId.value}\n*Date:* ${formatDate(rawDate)}
 
 👤 *Customer:* ${custName.value} (${custNumber.value})
@@ -202,7 +187,29 @@
       }, 1000);
     }
 
-    // Initialize on load
+    // Date Picker
+    const tripDate = document.getElementById("tripDate");
+    tripDate.addEventListener("click", () => {
+      const picker = document.createElement("input");
+      picker.type = "date";
+      picker.style.position = "absolute";
+      picker.style.opacity = 0;
+      document.body.appendChild(picker);
+      picker.oninput = () => {
+        const date = new Date(picker.value);
+        const display = date.toLocaleDateString("en-GB", {
+          day: '2-digit', month: 'long', year: 'numeric',
+          timeZone: 'Asia/Kolkata'
+        });
+        tripDate.value = display;
+        tripDate.dataset.raw = picker.value;
+        document.body.removeChild(picker);
+      };
+      picker.focus();
+      picker.click();
+    });
+
+    // Init
     tripId.value = genId();
   </script>
 </body>

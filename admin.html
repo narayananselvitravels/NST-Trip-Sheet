@@ -3,76 +3,154 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel – NST Travels</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <title>Admin Panel – NST</title>
   <style>
-    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
-    h2 { color: #4b2aad; }
-    .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    button {
-      background: #4b2aad; color: white; border: none; padding: 12px 20px;
-      border-radius: 5px; font-size: 16px; cursor: pointer; margin-right: 10px;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+      background: #f0f2f5;
+      color: #333;
+      max-width: 500px;
+      margin: auto;
     }
-    button:hover { background: #3a208b; }
-    .danger { background: #dc3545; }
-    .danger:hover { background: #b02a37; }
-    p { font-size: 16px; margin: 10px 0; }
+    h2 { color: #4b2aad; }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #4b2aad;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background-color: #3a1e95; }
+
+    .admin-section {
+      margin-top: 30px;
+      display: none;
+    }
+
+    .ratePopup {
+      display: none;
+      background: white;
+      border: 2px solid #4b2aad;
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background: #4b2aad;
+      color: white;
+    }
+
+    @media (max-width: 600px) {
+      input, button { font-size: 14px; }
+      th, td { font-size: 14px; }
+    }
   </style>
 </head>
 <body>
-  <h2>🛠️ NST Admin Panel</h2>
 
-  <div class="section">
-    <h3>📊 Shared Trip Stats</h3>
-    <p><strong>Trips Shared:</strong> <span id="tripCount">0</span></p>
-    <p><strong>Current Trip ID:</strong> <span id="currentId">#NST001</span></p>
-    <button onclick="exportTrips()">📥 Export Shared Trips (Excel)</button>
+<h2>🔐 Admin Panel</h2>
+
+<div id="loginForm">
+  <input type="text" id="adminUser" placeholder="Username">
+  <input type="password" id="adminPass" placeholder="Password">
+  <button onclick="checkLogin()">Login</button>
+</div>
+
+<div class="admin-section" id="adminContent">
+  <button onclick="resetAll()">🗑️ Reset All Trips & Share History</button>
+  <button onclick="showRates()">✏️ Edit Vehicle Rates</button>
+
+  <div class="ratePopup" id="ratePopup">
+    <h3>✏️ Edit Vehicle Rates</h3>
+    <table>
+      <thead>
+        <tr><th>Model</th><th>Package ₹</th><th>Extra Hr ₹</th><th>Extra KM ₹</th><th>Free KM</th><th>Vehicle No</th></tr>
+      </thead>
+      <tbody id="rateRows"></tbody>
+    </table>
+    <br>
+    <button onclick="saveRates()">💾 Save</button>
+    <button onclick="hideRates()">Cancel</button>
   </div>
+</div>
 
-  <div class="section">
-    <h3>⚠️ Reset System</h3>
-    <p>This will remove all trip data and reset the Trip ID to <strong>#NST001</strong>.</p>
-    <button class="danger" onclick="resetAll()">🗑️ Reset All Data</button>
-  </div>
+<script>
+const RKEY = "nst-rates";
 
-  <script>
-    const SHKEY = "shared-trips";
+let defaultRates = {
+  "Innova Crysta": { pkg: 7500, hr: 1000, km: 20, free: 80, no: "PY05N0505" },
+  "Innova Hycross": { pkg: 8500, hr: 1200, km: 24, free: 60, no: "PY01DB1007" },
+  "Force Urbania": { pkg: 9500, hr: 1500, km: 26, free: 70, no: "TN14AP2084" }
+};
 
-    function getTripCount() {
-      let shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-      document.getElementById("tripCount").innerText = shared.length;
-    }
+let rates = JSON.parse(localStorage.getItem(RKEY)) || defaultRates;
 
-    function getCurrentId() {
-      let c = localStorage.getItem("trip-seq") || "1";
-      document.getElementById("currentId").innerText = "#NST" + String(c).padStart(3, "0");
-    }
+function checkLogin() {
+  let u = document.getElementById("adminUser").value;
+  let p = document.getElementById("adminPass").value;
+  if (u === "admin" && p === "1234") {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("adminContent").style.display = "block";
+  } else {
+    alert("Invalid credentials");
+  }
+}
 
-    function exportTrips() {
-      const data = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-      if (!data.length) return alert("No shared trips to export.");
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "SharedTrips");
-      XLSX.writeFile(wb, "NST_Shared_Trips.xlsx");
-    }
+function resetAll() {
+  if (confirm("This will clear all saved trips and share history. Continue?")) {
+    localStorage.removeItem("nst-trips");
+    localStorage.removeItem("nst-shared");
+    alert("Data reset successful!");
+  }
+}
 
-    function resetAll() {
-      if (confirm("Are you sure? This will erase all trip data and reset everything.")) {
-        localStorage.removeItem("trip-seq");
-        localStorage.removeItem("shared-trips");
-        for (let key in localStorage) {
-          if (key.startsWith("#NST")) localStorage.removeItem(key);
-        }
-        alert("✅ Data cleared and system reset.");
-        getTripCount();
-        getCurrentId();
-      }
-    }
+function showRates() {
+  let rows = "";
+  for (let m in rates) {
+    let r = rates[m];
+    rows += `
+      <tr>
+        <td>${m}</td>
+        <td><input type="number" value="${r.pkg}" onchange="rates['${m}'].pkg=this.value"></td>
+        <td><input type="number" value="${r.hr}" onchange="rates['${m}'].hr=this.value"></td>
+        <td><input type="number" value="${r.km}" onchange="rates['${m}'].km=this.value"></td>
+        <td><input type="number" value="${r.free}" onchange="rates['${m}'].free=this.value"></td>
+        <td><input type="text" value="${r.no}" onchange="rates['${m}'].no=this.value"></td>
+      </tr>`;
+  }
+  document.getElementById("rateRows").innerHTML = rows;
+  document.getElementById("ratePopup").style.display = "block";
+}
 
-    getTripCount();
-    getCurrentId();
-  </script>
+function hideRates() {
+  document.getElementById("ratePopup").style.display = "none";
+}
+
+function saveRates() {
+  localStorage.setItem(RKEY, JSON.stringify(rates));
+  hideRates();
+  alert("Rates updated successfully!");
+}
+</script>
+
 </body>
 </html>

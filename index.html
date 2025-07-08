@@ -202,12 +202,7 @@
 📝 *Note:* ${note.value || "-"}`;
 
       window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-
-      setTimeout(() => {
-        if (confirm("✅ Did you successfully send the WhatsApp message?")) {
-          reserveNextId();
-        }
-      }, 1000);
+      reserveNextId(); // immediately increment Trip ID
     }
 
     // Custom date logic

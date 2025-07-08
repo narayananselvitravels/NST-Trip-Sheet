@@ -103,15 +103,16 @@
   }
 
   function genId() {
-    let n = parseInt(localStorage.getItem("trip-seq")||"1");
-    return "#NST"+String(n).padStart(3,"0");
-  }
-  function reserveNextId() {
-    let c = parseInt(localStorage.getItem("trip-seq")||"1");
-    localStorage.setItem("#NST"+String(c).padStart(3,"0"),"used");
-    localStorage.setItem("trip-seq",c+1);
-    window.onload = function () {
-  tripId.value = genId();
+  let c = 1;
+  while (localStorage.getItem("#NST" + String(c).padStart(3, "0")) === "used") c++;
+  return "#NST" + String(c).padStart(3, "0");
+}
+
+function reserveNextId() {
+  const id = tripId.value;
+  localStorage.setItem(id, "used");
+  tripId.value = genId(); // prepare next ID
+}
   loadDriverDropdowns();
   loadVehicleDropdowns();
 };
@@ -251,7 +252,20 @@
   }
 
   tripDate.addEventListener("change", () => {
-    const raw = tripDate.value, d=new Date(raw);
+  const raw = tripDate.value;
+  if (!raw) return;
+  const d = new Date(raw);
+  tripDateDisplay.value = d.toLocaleDateString("en-GB", {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata'
+  });
+  tripDateDisplay.dataset.raw = raw;
+});
+
+tripId.value = genId();
+ d=new Date(raw);
     tripDateDisplay.value = d.toLocaleDateString("en-GB", {day:'2-digit',month:'long',year:'numeric',timeZone:'Asia/Kolkata'});
     tripDateDisplay.dataset.raw = raw;
   });

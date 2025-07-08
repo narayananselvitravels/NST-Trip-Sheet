@@ -1,0 +1,96 @@
+<!-- driver-vehicle-master.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver & Vehicle Master – NST Travels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; padding: 20px; background: #f4f6f9; max-width: 800px; margin: auto }
+    h2 { color: #4b2aad }
+    .section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1) }
+    label { font-weight: 600; display: block; margin-top: 15px; }
+    input, select, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px }
+    button { background: #4b2aad; color: white; cursor: pointer; border: none; margin-top: 15px; }
+    button:hover { background: #3a208b; }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left }
+    th { background: #4b2aad; color: white }
+  </style>
+</head>
+<body>
+  <h2>🧑‍✈️ Driver & 🚘 Vehicle Master</h2>
+
+  <div class="section">
+    <h3>Add Driver</h3>
+    <label>Driver Name</label>
+    <input type="text" id="dName">
+    <label>Phone Number</label>
+    <input type="text" id="dPhone">
+    <button onclick="addDriver()">➕ Add Driver</button>
+
+    <table id="driverTable"></table>
+  </div>
+
+  <div class="section">
+    <h3>Add Vehicle</h3>
+    <label>Vehicle Model</label>
+    <input type="text" id="vModel">
+    <label>Vehicle Number</label>
+    <input type="text" id="vNumber">
+    <button onclick="addVehicle()">➕ Add Vehicle</button>
+
+    <table id="vehicleTable"></table>
+  </div>
+
+  <script>
+    const dKey = "drivers";
+    const vKey = "vehicles";
+
+    function getStored(key) {
+      return JSON.parse(localStorage.getItem(key) || "[]");
+    }
+    function saveStored(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function addDriver() {
+      const name = dName.value.trim(), phone = dPhone.value.trim();
+      if (!name || !phone) return alert("Please enter name and number");
+      const list = getStored(dKey);
+      list.push({ name, phone });
+      saveStored(dKey, list);
+      dName.value = dPhone.value = "";
+      renderDrivers();
+    }
+
+    function addVehicle() {
+      const model = vModel.value.trim(), number = vNumber.value.trim();
+      if (!model || !number) return alert("Please enter model and number");
+      const list = getStored(vKey);
+      list.push({ model, number });
+      saveStored(vKey, list);
+      vModel.value = vNumber.value = "";
+      renderVehicles();
+    }
+
+    function renderDrivers() {
+      const list = getStored(dKey);
+      let html = `<tr><th>Name</th><th>Phone</th></tr>`;
+      list.forEach(d => html += `<tr><td>${d.name}</td><td>${d.phone}</td></tr>`);
+      driverTable.innerHTML = html;
+    }
+
+    function renderVehicles() {
+      const list = getStored(vKey);
+      let html = `<tr><th>Model</th><th>Number</th></tr>`;
+      list.forEach(v => html += `<tr><td>${v.model}</td><td>${v.number}</td></tr>`);
+      vehicleTable.innerHTML = html;
+    }
+
+    renderDrivers();
+    renderVehicles();
+  </script>
+</body>
+</html>

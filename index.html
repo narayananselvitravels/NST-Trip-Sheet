@@ -1,292 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NST Trip Sheet – Protected</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>NST Trip Sheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0; padding: 0;
-      background: #f5f5f5;
-    }
-    #loginScreen {
-      max-width: 350px;
-      margin: 100px auto;
-      padding: 30px;
-      border: 1px solid #ccc;
-      background: white;
-      text-align: center;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    #loginScreen input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 15px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
-    }
-    #loginScreen button {
-      width: 100%;
-      padding: 10px;
-      background: #4b2aad;
-      color: white;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    #loginScreen button:hover {
-      background: #3a218d;
-    }
-    #protected {
-      display: none;
-      padding: 20px;
-    }
-    input, select, textarea, button {
-      font-family: 'Poppins', sans-serif;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; max-width: 800px; margin: auto; }
+    label { font-weight: bold; display: block; margin-top: 10px; }
+    input, select, button { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #4b2aad; color: white; border: none; margin-top: 15px; cursor: pointer; }
+    button:hover { background: #3a1d91; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .popup { display: none; position: fixed; top: 10%; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 9999; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #4b2aad; color: white; }
   </style>
 </head>
 <body>
 
-  <div id="loginScreen">
-    <h2>🔒 Password Required</h2>
-    <p>Enter password to access the NST Trip Sheet</p>
-    <input type="password" id="accessPassword" placeholder="Enter password" />
-    <button onclick="checkPassword()">Login</button>
-    <p id="loginError" style="color: red; display: none;">❌ Incorrect password</p>
-  </div>
+<h2>📝 NST Trip Sheet</h2>
 
-  <div id="protected">
-    <!-- 📝 NST Trip Sheet App content starts here -->
-    <h2>📝 NST Trip Sheet</h2>
-    <div id="mainForm">
-      <label>Trip ID</label><input id="tripId" readonly>
-      <label>Date</label><input type="date" id="tripDate">
-      <label>Customer Name</label><input id="custName">
-      <label>Customer Number</label><input id="custNumber">
-      <label>Driver Name</label>
-      <select id="driverName" onchange="syncDriver(true)">
-        <option value="">-- Select --</option>
-        <option>Perumal</option>
-        <option>Siva</option>
-      </select>
-      <label>Driver Number</label>
-      <select id="driverNumber" onchange="syncDriver(false)">
-        <option value="">-- Select --</option>
-        <option>9699994563</option>
-        <option>9551208961</option>
-      </select>
-      <label>Vehicle Model</label>
-      <select id="vehicleModel" onchange="sync(true)">
-        <option value="">-- Select --</option>
-        <option>Innova Crysta</option>
-        <option>Innova Hycross</option>
-        <option>Force Urbania</option>
-      </select>
-      <label>Vehicle Number</label>
-      <select id="vehicleNo" onchange="sync(false)">
-        <option value="">-- Select --</option>
-        <option>PY05N0505</option>
-        <option>PY01DB1007</option>
-        <option>TN14AP2084</option>
-      </select>
-      <label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
-      <label>End Time</label><input type="time" id="endTime" onchange="recalc()">
-      <label>Duration (hrs)</label><input id="duration" readonly>
-      <label>Extra Hours</label><input id="extraHours" readonly>
-      <label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
-      <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
-      <label>Total KM</label><input id="totalKM" readonly>
-      <label>Extra KM</label><input id="extraKM" readonly>
-      <label>Toll ₹</label><input type="number" id="toll" value="0" onchange="recalc()">
-      <label>Parking ₹</label><input type="number" id="parking" value="0" onchange="recalc()">
-      <label>Note</label><textarea id="note" rows="3" placeholder="Enter notes..."></textarea>
-      <input type="hidden" id="eHr">
-      <input type="hidden" id="eKm">
-      <input type="hidden" id="freeKm">
+<label>Vehicle Model</label>
+<select id="vehicleModel" onchange="syncVehicle(true)">
+  <option value="">-- Select --</option>
+  <option>Innova Crysta</option>
+  <option>Innova Hycross</option>
+  <option>Force Urbania</option>
+</select>
 
-      <div class="btn-group">
-        <button onclick="shareLast()">📤 Share</button>
-      </div>
-    </div>
+<label>Vehicle Number</label>
+<select id="vehicleNo" onchange="syncVehicle(false)">
+  <option value="">-- Select --</option>
+  <option>PY05N0505</option>
+  <option>PY01DB1007</option>
+  <option>TN14AP2084</option>
+</select>
 
-    <div class="popup" id="tripPopup">
-      <h3>📋 Shared Trips</h3>
-      <div id="tripList"></div>
-      <button onclick="tripPopup.style.display='none'">Close</button>
-    </div>
+<label>Start Time</label>
+<input type="time" id="startTime" onchange="recalc()">
 
-    <div id="printContent"></div>
-  </div> <!-- end of protected div -->
+<label>End Time</label>
+<input type="time" id="endTime" onchange="recalc()">
 
-  <script>
-    const CORRECT_PASS = "nst@123";
-    function checkPassword() {
-      const entered = document.getElementById('accessPassword').value;
-      if (entered === CORRECT_PASS) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('protected').style.display = 'block';
-      } else {
-        document.getElementById('loginError').style.display = 'block';
+<label>Start KM</label>
+<input type="number" id="startKM" onchange="recalc()">
+
+<label>End KM</label>
+<input type="number" id="endKM" onchange="recalc()">
+
+<label>Duration (hrs)</label>
+<input id="duration" readonly>
+
+<label>Extra Hours</label>
+<input id="extraHours" readonly>
+
+<label>Total KM</label>
+<input id="totalKM" readonly>
+
+<label>Extra KM</label>
+<input id="extraKM" readonly>
+
+<input type="hidden" id="freeKm">
+<input type="hidden" id="freeHr">
+
+<div class="btn-group">
+  <button onclick="openEditPackagePopup()">✏️ Edit Package Limits</button>
+</div>
+
+<!-- Edit Popup -->
+<div class="popup" id="editPackagePopup">
+  <h3>✏️ Edit Package Limits</h3>
+  <table>
+    <thead>
+      <tr><th>Model</th><th>Free KM</th><th>Free Hrs</th></tr>
+    </thead>
+    <tbody id="editPackageTable"></tbody>
+  </table>
+  <button onclick="savePackageLimits()">Save</button>
+  <button onclick="document.getElementById('editPackagePopup').style.display='none'">Close</button>
+</div>
+
+<script>
+let vehicles = {
+  "Innova Crysta": "PY05N0505",
+  "Innova Hycross": "PY01DB1007",
+  "Force Urbania": "TN14AP2084"
+};
+
+let pricing = {
+  "Innova Crysta": { freeKm: 80, freeHr: 8 },
+  "Innova Hycross": { freeKm: 90, freeHr: 6 },
+  "Force Urbania": { freeKm: 70, freeHr: 7 }
+};
+
+const saved = localStorage.getItem("nst-pricing");
+if (saved) pricing = JSON.parse(saved);
+
+function syncVehicle(fromModel) {
+  if (fromModel) {
+    let model = document.getElementById("vehicleModel").value;
+    document.getElementById("vehicleNo").value = vehicles[model] || "";
+  } else {
+    let no = document.getElementById("vehicleNo").value;
+    for (let model in vehicles) {
+      if (vehicles[model] === no) {
+        document.getElementById("vehicleModel").value = model;
+        break;
       }
     }
+  }
 
-    let tripCounter = 1;
-    let sharedTrips = JSON.parse(localStorage.getItem("sharedTrips") || "[]");
+  const model = document.getElementById("vehicleModel").value;
+  if (pricing[model]) {
+    document.getElementById("freeKm").value = pricing[model].freeKm;
+    document.getElementById("freeHr").value = pricing[model].freeHr;
+  }
 
-    function formatDateInput(dateStr) {
-      if (!dateStr) return "";
-      const d = new Date(dateStr);
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}-${mm}-${yyyy}`;
-    }
+  recalc();
+}
 
-    function to12Hr(timeStr) {
-      const [h, m] = timeStr.split(":");
-      let hour = parseInt(h);
-      let suffix = hour >= 12 ? "PM" : "AM";
-      hour = hour % 12 || 12;
-      return `${hour}:${m} ${suffix}`;
-    }
+function recalc() {
+  const startTime = document.getElementById("startTime").value;
+  const endTime = document.getElementById("endTime").value;
+  const startKM = +document.getElementById("startKM").value;
+  const endKM = +document.getElementById("endKM").value;
+  const freeHr = +document.getElementById("freeHr").value || 0;
+  const freeKm = +document.getElementById("freeKm").value || 0;
 
-    function sync(fromModel) {
-      const vehicleMap = {
-        "Innova Crysta": { no: "PY05N0505" },
-        "Innova Hycross": { no: "PY01DB1007" },
-        "Force Urbania": { no: "TN14AP2084" }
-      };
-      if (fromModel) {
-        const model = vehicleModel.value;
-        if (vehicleMap[model]) vehicleNo.value = vehicleMap[model].no;
-      } else {
-        const selected = vehicleNo.value;
-        for (let m in vehicleMap) {
-          if (vehicleMap[m].no === selected) vehicleModel.value = m;
-        }
-      }
-    }
+  if (startTime && endTime) {
+    let s = new Date(`1970-01-01T${startTime}`);
+    let e = new Date(`1970-01-01T${endTime}`);
+    let diff = (e - s) / 3600000;
+    if (diff < 0) diff += 24;
+    const hrs = Math.ceil(diff);
+    document.getElementById("duration").value = hrs;
+    document.getElementById("extraHours").value = hrs > freeHr ? hrs - freeHr : 0;
+  }
 
-    function syncDriver(fromName) {
-      const driverMap = {
-        "Perumal": "9699994563",
-        "Siva": "9551208961"
-      };
-      if (fromName) {
-        const name = driverName.value;
-        if (driverMap[name]) driverNumber.value = driverMap[name];
-      } else {
-        const num = driverNumber.value;
-        for (let n in driverMap) {
-          if (driverMap[n] === num) driverName.value = n;
-        }
-      }
-    }
+  const totalKM = endKM - startKM;
+  document.getElementById("totalKM").value = totalKM;
+  document.getElementById("extraKM").value = totalKM > freeKm ? totalKM - freeKm : 0;
+}
 
-    function recalc() {
-      const sTime = startTime.value;
-      const eTime = endTime.value;
-      if (sTime && eTime) {
-        let s = new Date(`1970-01-01T${sTime}`);
-        let e = new Date(`1970-01-01T${eTime}`);
-        let diff = (e - s) / 3600000;
-        if (diff < 0) diff += 24;
-        let hrs = Math.ceil(diff);
-        duration.value = hrs;
-        extraHours.value = hrs > 8 ? hrs - 8 : 0;
-      }
-      const sKM = parseFloat(startKM.value || 0);
-      const eKM = parseFloat(endKM.value || 0);
-      const total = eKM - sKM;
-      totalKM.value = total;
-      extraKM.value = total > 60 ? total - 60 : 0;
-    }
+function openEditPackagePopup() {
+  const tbody = document.getElementById("editPackageTable");
+  tbody.innerHTML = '';
+  for (let model in pricing) {
+    let r = pricing[model];
+    tbody.innerHTML += `
+      <tr>
+        <td>${model}</td>
+        <td><input type="number" value="${r.freeKm}" onchange="pricing['${model}'].freeKm=this.value"></td>
+        <td><input type="number" value="${r.freeHr}" onchange="pricing['${model}'].freeHr=this.value"></td>
+      </tr>
+    `;
+  }
+  document.getElementById("editPackagePopup").style.display = 'block';
+}
 
-    function genTripId() {
-      const used = sharedTrips.map(t => t.id);
-      for (let i = 1; i <= 999; i++) {
-        let id = "#NST" + String(i).padStart(3, '0');
-        if (!used.includes(id)) return id;
-      }
-      return "#NST999";
-    }
+function savePackageLimits() {
+  localStorage.setItem("nst-pricing", JSON.stringify(pricing));
+  document.getElementById("editPackagePopup").style.display = 'none';
+  syncVehicle(true);
+}
+</script>
 
-    function shareLast() {
-      const trip = {
-        id: genTripId(),
-        date: tripDate.value,
-        cust: custName.value,
-        custNum: custNumber.value,
-        driver: driverName.value,
-        driverNum: driverNumber.value,
-        model: vehicleModel.value,
-        no: vehicleNo.value,
-        start: startTime.value,
-        end: endTime.value,
-        duration: duration.value,
-        extraHr: extraHours.value,
-        totalKM: totalKM.value,
-        extraKM: extraKM.value,
-        toll: toll.value,
-        park: parking.value,
-        note: note.value
-      };
-
-      const msg = `📋 *TRIP SUMMARY*
-
-*TRIP ID:* ${trip.id}
-*DATE:* ${formatDateInput(trip.date)}
-
-👤 *CUSTOMER INFO*
-• Name: ${trip.cust}
-• Number: ${trip.custNum}
-
-👨‍✈ *DRIVER INFO*
-• Name: ${trip.driver}
-• Number: ${trip.driverNum}
-
-🚘 *VEHICLE INFO*
-• Model: ${trip.model}
-• Vehicle No: ${trip.no}
-
-🕒 *TIME & DISTANCE*
-• Start Time: ${to12Hr(trip.start)}
-• End Time: ${to12Hr(trip.end)}
-• Duration: ${trip.duration} hrs
-• Extra Hrs: ${trip.extraHr}
-• Total KM: ${trip.totalKM} km
-• Extra KM: ${trip.extraKM} km
-
-🛣 *Toll:* ₹${trip.toll}
-🅿️ *Parking:* ₹${trip.park}
-
-📝 *Note:* ${trip.note || "-"}`;
-
-      const url = "https://wa.me/?text=" + encodeURIComponent(msg);
-      const newWindow = window.open(url, "_blank");
-      const checker = setInterval(() => {
-        if (newWindow.closed) {
-          sharedTrips.push(trip);
-          localStorage.setItem("sharedTrips", JSON.stringify(sharedTrips));
-          clearForm();
-          clearInterval(checker);
-        }
-      }, 1000);
-    }
-
-    function clearForm() {
-      document.querySelectorAll("#mainForm input, #mainForm select, #mainForm textarea").forEach(el => el.value = '');
-      tripId.value = genTripId();
-    }
-
-    tripId.value = genTripId();
-  </script>
 </body>
 </html>

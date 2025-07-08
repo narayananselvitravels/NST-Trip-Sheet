@@ -44,8 +44,10 @@
   <label>Trip ID</label><input id="tripId" readonly>
 
   <label>Date</label>
-  <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor: pointer;">
-  <input type="date" id="tripDate" style="display:none;">
+  <div style="position: relative;">
+    <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor: pointer;">
+    <input type="date" id="tripDate" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">
+  </div>
 
   <label>Customer Name</label><input id="custName">
   <label>Customer Number</label><input id="custNumber">
@@ -107,8 +109,8 @@
       tripId.value = genId();
     }
 
-    function formatDate(dateStr) {
-      const d = new Date(dateStr);
+    function formatDate(raw) {
+      const d = new Date(raw);
       const dd = String(d.getDate()).padStart(2, '0');
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const yyyy = d.getFullYear();
@@ -208,16 +210,12 @@
       }, 1000);
     }
 
-    // Date Picker Logic
+    // Custom date logic
     const tripDateDisplay = document.getElementById("tripDateDisplay");
-    const tripDateHidden = document.getElementById("tripDate");
+    const tripDate = document.getElementById("tripDate");
 
-    tripDateDisplay.addEventListener("click", () => {
-      tripDateHidden.click();
-    });
-
-    tripDateHidden.addEventListener("change", () => {
-      const raw = tripDateHidden.value;
+    tripDate.addEventListener("change", () => {
+      const raw = tripDate.value;
       if (!raw) return;
       const d = new Date(raw);
       const display = d.toLocaleDateString("en-GB", {
@@ -230,7 +228,6 @@
       tripDateDisplay.dataset.raw = raw;
     });
 
-    // Initialize first trip ID
     tripId.value = genId();
   </script>
 </body>

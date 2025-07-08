@@ -44,7 +44,8 @@
   <label>Trip ID</label><input id="tripId" readonly>
 
   <label>Date</label>
-  <input type="text" id="tripDate" placeholder="Select Date" readonly style="cursor: pointer;">
+  <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor: pointer;">
+  <input type="date" id="tripDate" style="display:none;">
 
   <label>Customer Name</label><input id="custName">
   <label>Customer Number</label><input id="custNumber">
@@ -75,6 +76,9 @@
   <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
   <label>Total KM</label><input id="totalKM" readonly>
   <label>Extra KM</label><input id="extraKM" readonly>
+
+  <label>Parking ₹</label><input type="number" id="parking" value="0">
+  <label>Toll ₹</label><input type="number" id="toll" value="0">
 
   <label>Note</label><textarea id="note" rows="3" placeholder="Enter any trip notes..."></textarea>
 
@@ -158,23 +162,40 @@
     }
 
     function shareWhatsApp() {
-      const rawDate = document.getElementById("tripDate").dataset.raw;
+      const rawDate = tripDateDisplay.dataset.raw;
       if (!rawDate) {
         alert("Please select a date before sharing.");
         return;
       }
-      const msg = `📋 *TRIP SUMMARY*\n*Trip ID:* ${tripId.value}\n*Date:* ${formatDate(rawDate)}
 
-👤 *Customer:* ${custName.value} (${custNumber.value})
-👨‍✈️ *Driver:* ${driverName.value} (${driverNumber.value})
-🚘 *Vehicle:* ${vehicleModel.value} – ${vehicleNo.value}
+      const msg = `📋 *TRIP SUMMARY*
 
-🕒 *Start:* ${to12Hr(startTime.value)}
-🕒 *End:* ${to12Hr(endTime.value)}
-⏱️ *Duration:* ${duration.value || 0} hrs
-➕ *Extra Hours:* ${extraHours.value || 0}
-📍 *KM:* ${totalKM.value || 0} km
-➕ *Extra KM:* ${extraKM.value || 0} km
+*TRIP ID:* ${tripId.value}
+*DATE:* ${formatDate(rawDate)}
+
+👤 *CUSTOMER INFO*
+• *Name:* ${custName.value}
+• *Number:* ${custNumber.value}
+
+👨‍✈️ *DRIVER INFO*
+• *Name:* ${driverName.value}
+• *Number:* ${driverNumber.value}
+
+🚘 *VEHICLE INFO*
+• *Model:* ${vehicleModel.value}
+• *Vehicle No:* ${vehicleNo.value}
+
+🕒 *TIME & DISTANCE*
+• *Start Time:* ${to12Hr(startTime.value)}
+• *End Time:* ${to12Hr(endTime.value)}
+• *Duration:* ${duration.value || 0} hrs
+• *Extra Hrs:* ${extraHours.value || 0}
+• *Total KM:* ${totalKM.value || 0} km
+• *Extra KM:* ${extraKM.value || 0} km
+
+💰 *CHARGES*
+• *Parking:* ₹${parking.value || 0}
+• *Toll:* ₹${toll.value || 0}
 
 📝 *Note:* ${note.value || "-"}`;
 
@@ -187,29 +208,29 @@
       }, 1000);
     }
 
-    // Date Picker
-    const tripDate = document.getElementById("tripDate");
-    tripDate.addEventListener("click", () => {
-      const picker = document.createElement("input");
-      picker.type = "date";
-      picker.style.position = "absolute";
-      picker.style.opacity = 0;
-      document.body.appendChild(picker);
-      picker.oninput = () => {
-        const date = new Date(picker.value);
-        const display = date.toLocaleDateString("en-GB", {
-          day: '2-digit', month: 'long', year: 'numeric',
-          timeZone: 'Asia/Kolkata'
-        });
-        tripDate.value = display;
-        tripDate.dataset.raw = picker.value;
-        document.body.removeChild(picker);
-      };
-      picker.focus();
-      picker.click();
+    // Date Picker Logic
+    const tripDateDisplay = document.getElementById("tripDateDisplay");
+    const tripDateHidden = document.getElementById("tripDate");
+
+    tripDateDisplay.addEventListener("click", () => {
+      tripDateHidden.click();
     });
 
-    // Init
+    tripDateHidden.addEventListener("change", () => {
+      const raw = tripDateHidden.value;
+      if (!raw) return;
+      const d = new Date(raw);
+      const display = d.toLocaleDateString("en-GB", {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata'
+      });
+      tripDateDisplay.value = display;
+      tripDateDisplay.dataset.raw = raw;
+    });
+
+    // Initialize first trip ID
     tripId.value = genId();
   </script>
 </body>

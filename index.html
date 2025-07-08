@@ -42,7 +42,11 @@
   <h2>📝 NST Trip Sheet</h2>
 
   <label>Trip ID</label><input id="tripId" readonly>
-  <label>Date</label><input type="date" id="tripDate">
+
+  <label>Date</label>
+  <input type="date" id="tripDatePicker" onchange="updateDisplayDate()">
+  <input id="tripDateDisplay" readonly>
+
   <label>Customer Name</label><input id="custName">
   <label>Customer Number</label><input id="custNumber">
   <label>Driver Name</label><input id="driverName">
@@ -100,13 +104,22 @@
       tripId.value = genId();
     }
 
-    function formatDate(dateStr) {
-      if (!dateStr) return "";
-      const d = new Date(dateStr);
-      return d.toLocaleDateString("en-GB", {
-        day: '2-digit', month: '2-digit', year: 'numeric',
+    function updateDisplayDate() {
+      const picker = document.getElementById("tripDatePicker");
+      const display = document.getElementById("tripDateDisplay");
+      const date = new Date(picker.value);
+      display.value = date.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'long', year: 'numeric',
         timeZone: 'Asia/Kolkata'
       });
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
     }
 
     function to12Hr(timeStr) {
@@ -156,7 +169,7 @@
     }
 
     function shareWhatsApp() {
-      const msg = `📋 *TRIP SUMMARY*\n*Trip ID:* ${tripId.value}\n*Date:* ${formatDate(tripDate.value)}
+      const msg = `📋 *TRIP SUMMARY*\n*Trip ID:* ${tripId.value}\n*Date:* ${formatDate(tripDatePicker.value)}
 
 👤 *Customer:* ${custName.value} (${custNumber.value})
 👨‍✈️ *Driver:* ${driverName.value} (${driverNumber.value})
@@ -173,16 +186,17 @@
 
       window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
 
-      // Ask user if sent
       setTimeout(() => {
         if (confirm("✅ Did you successfully send the WhatsApp message?")) {
-          reserveNextId(); // Only if confirmed
+          reserveNextId();
         }
       }, 1000);
     }
 
+    // Initialize on load
     tripId.value = genId();
-    tripDate.valueAsDate = new Date();
+    tripDatePicker.valueAsDate = new Date();
+    updateDisplayDate();
   </script>
 </body>
 </html>

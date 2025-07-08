@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Rate Card – NST</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
+    h2 { color: #4b2aad; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #4b2aad; color: white; }
+    input[type=number] { width: 100%; padding: 8px; font-size: 14px; }
+    button {
+      background: #4b2aad; color: white; border: none; padding: 12px 20px;
+      border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 20px;
+    }
+    button:hover { background: #3a208b; }
+  </style>
+</head>
+<body>
+
+  <h2>✏️ Edit Vehicle Rate Card</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Package ₹</th>
+        <th>Extra Hr ₹</th>
+        <th>Extra KM ₹</th>
+        <th>Free KM</th>
+        <th>Free Hrs</th>
+      </tr>
+    </thead>
+    <tbody id="rateTable">
+      <!-- JS will populate rows -->
+    </tbody>
+  </table>
+
+  <button onclick="saveRates()">💾 Save Changes</button>
+
+  <script>
+    const defaultRates = {
+      "Innova Crysta": { package: 7500, extraHr: 1000, extraKm: 20, freeKm: 80, freeHrs: 8 },
+      "Innova Hycross": { package: 8500, extraHr: 1200, extraKm: 24, freeKm: 90, freeHrs: 6 },
+      "Force Urbania": { package: 9500, extraHr: 1500, extraKm: 26, freeKm: 70, freeHrs: 7 }
+    };
+
+    function loadRates() {
+      const saved = JSON.parse(localStorage.getItem("vehicle-packages") || "null") || defaultRates;
+      const tbody = document.getElementById("rateTable");
+      tbody.innerHTML = "";
+
+      for (const [model, values] of Object.entries(saved)) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${model}</td>
+          <td><input type="number" value="${values.package}" data-model="${model}" data-field="package"></td>
+          <td><input type="number" value="${values.extraHr}" data-model="${model}" data-field="extraHr"></td>
+          <td><input type="number" value="${values.extraKm}" data-model="${model}" data-field="extraKm"></td>
+          <td><input type="number" value="${values.freeKm}" data-model="${model}" data-field="freeKm"></td>
+          <td><input type="number" value="${values.freeHrs}" data-model="${model}" data-field="freeHrs"></td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    function saveRates() {
+      const inputs = document.querySelectorAll("#rateTable input");
+      const data = {};
+      inputs.forEach(input => {
+        const model = input.dataset.model;
+        const field = input.dataset.field;
+        const value = +input.value;
+        if (!data[model]) data[model] = {};
+        data[model][field] = value;
+      });
+      localStorage.setItem("vehicle-packages", JSON.stringify(data));
+      alert("✅ Vehicle rates saved successfully.");
+    }
+
+    loadRates();
+  </script>
+</body>
+</html>

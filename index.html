@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NST Trip Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { font-family:'Poppins',sans-serif; margin:0 auto; padding:20px; max-width:800px; background:#f4f6f9 }
     h2 { color:#4b2aad }
@@ -20,6 +19,10 @@
     table, th, td { border:1px solid #ddd }
     th, td { padding:8px; text-align:left }
     th { background:#4b2aad; color:#fff }
+
+    /* Payment status color classes */
+    .paid { background:#d4edda; color:#155724; }
+    .not-paid { background:#f8d7da; color:#721c24; }
   </style>
 </head>
 <body>
@@ -57,17 +60,18 @@
 <label>Extra KM</label><input type="number" id="extraKM">
 
 <label>Total Amount ₹</label><input type="number" id="totalAmount">
+
 <label>Payment Status</label>
-<select id="paymentStatus">
+<select id="paymentStatus" onchange="updatePaymentColor(this)">
   <option value="">-- Select --</option>
-  <option>Paid</option>
-  <option>Not Paid</option>
+  <option value="Paid">Paid</option>
+  <option value="Not Paid">Not Paid</option>
 </select>
 
 <label>Note</label><textarea id="note" rows="3"></textarea>
 
-<button onclick="saveTrip()">💾 Save Trip</button>
-<button onclick="shareWhatsApp()">📤 Share via WhatsApp</button>
+<!-- BUTTONS -->
+<button onclick="window.location.href='whatsapp-share.html'">📤 WhatsApp Share</button>
 <button onclick="showSharedTrips()">📋 View Saved Trips</button>
 <button onclick="window.location.href='admin.html'">🔐 Admin Panel</button>
 
@@ -104,12 +108,6 @@
     return "#NST" + String(n).padStart(3, "0");
   }
 
-  function reserveId() {
-    let n = parseInt(localStorage.getItem("trip-seq") || "1");
-    localStorage.setItem("#NST" + String(n).padStart(3, "0"), "used");
-    localStorage.setItem("trip-seq", n + 1);
-  }
-
   function syncDriver(fromName) {
     if (fromName) driverNumber.value = drivers[driverName.value] || "";
     else for (let k in drivers) if (drivers[k] === driverNumber.value) driverName.value = k;
@@ -132,51 +130,6 @@
     totalKM.value = total;
   }
 
-  function saveTrip() {
-    const data = {
-      id: tripId.value,
-      date: tripDateDisplay.dataset.raw || "",
-      pickup: pickupLocation.value,
-      drop: dropLocation.value,
-      custName: custName.value,
-      custNumber: custNumber.value,
-      driverName: driverName.value,
-      driverNumber: driverNumber.value,
-      vehicleModel: vehicleModel.value,
-      vehicleNo: vehicleNo.value,
-      start: startTime.value,
-      end: endTime.value,
-      duration: duration.value,
-      extraHours: extraHours.value,
-      startKM: startKM.value,
-      endKM: endKM.value,
-      totalKM: totalKM.value,
-      extraKM: extraKM.value,
-      totalAmount: totalAmount.value,
-      paymentStatus: paymentStatus.value,
-      note: note.value
-    };
-    let arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-    arr.push(data);
-    localStorage.setItem(SHKEY, JSON.stringify(arr));
-    alert("✅ Trip saved successfully");
-    reserveId();
-    tripId.value = genId();
-  }
-
-  function shareWhatsApp() {
-    const msg = `📋 *TRIP SUMMARY*\n\n*Trip ID:* ${tripId.value}\n*Date:* ${tripDateDisplay.value}\n\n` +
-    `📍 *Pickup:* ${pickupLocation.value}\n📍 *Drop:* ${dropLocation.value}\n\n` +
-    `👤 *Customer:* ${custName.value} (${custNumber.value})\n` +
-    `🚖 *Driver:* ${driverName.value} (${driverNumber.value})\n` +
-    `🚘 *Vehicle:* ${vehicleModel.value} (${vehicleNo.value})\n\n` +
-    `🕒 *Time:* ${startTime.value} - ${endTime.value} (${duration.value} hrs, Extra ${extraHours.value} hrs)\n` +
-    `📍 *KM:* ${startKM.value} - ${endKM.value} = ${totalKM.value} km (Extra ${extraKM.value} km)\n` +
-    `💰 *Total Amount:* ₹${totalAmount.value} | *Status:* ${paymentStatus.value}\n\n` +
-    `📝 *Note:* ${note.value || '-'}`;
-    window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-  }
-
   function showSharedTrips() {
     const arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
     if (!arr.length) {
@@ -189,6 +142,12 @@
       html += `<tr><td>${t.id}</td><td>${t.date}</td><td>${t.pickup}</td><td>${t.drop}</td><td>${t.custName}</td><td>${t.driverName}</td><td>${t.vehicleModel}</td><td>₹${t.totalAmount}</td><td>${t.paymentStatus}</td></tr>`;
     });
     sharedTripsList.innerHTML = html + "</table>";
+  }
+
+  function updatePaymentColor(select) {
+    select.classList.remove("paid", "not-paid");
+    if (select.value === "Paid") select.classList.add("paid");
+    else if (select.value === "Not Paid") select.classList.add("not-paid");
   }
 
   tripDate.addEventListener("change", () => {

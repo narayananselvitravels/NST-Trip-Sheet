@@ -12,7 +12,7 @@
     label { font-weight:bold; margin-top:10px; display:block }
     input, select, textarea, button {
       width:100%; padding:10px; margin:5px 0 15px;
-      border:1px solid #ccc; border-radius:5px; font-size:16px;
+      border:1px solid #ccc; border-radius:5px; font-size:16px
     }
     button { background:#4b2aad; color:#fff; border:none; cursor:pointer }
     button:hover { background:#3a208b }
@@ -34,6 +34,16 @@
   <input type="date" id="tripDate" style="opacity:0;position:absolute;top:0;left:0;width:100%;height:100%;cursor:pointer">
 </div>
 
+<label>Pickup Location</label>
+<input id="pickup" list="locations" placeholder="Start typing...">
+<label>Drop Location</label>
+<input id="drop" list="locations" placeholder="Start typing...">
+<datalist id="locations">
+  <option value="Pondicherry"><option value="Chennai"><option value="Bangalore">
+  <option value="Villupuram"><option value="Tirupati"><option value="Madurai">
+  <option value="Coimbatore"><option value="Trichy"><option value="Salem">
+</datalist>
+
 <label>Customer Name</label><input id="custName">
 <label>Customer Number</label><input id="custNumber">
 
@@ -52,6 +62,13 @@
 <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
 <label>Total KM</label><input id="totalKM" readonly>
 <label>Extra KM</label><input type="number" id="extraKM">
+
+<label>Total Amount ₹</label><input type="number" id="totalAmount">
+<label>Payment Status</label>
+<select id="paymentStatus">
+  <option>Paid</option>
+  <option>Not Paid</option>
+</select>
 
 <label>Note</label><textarea id="note" rows="3"></textarea>
 
@@ -125,6 +142,8 @@
     const data = {
       id: tripId.value,
       date: tripDateDisplay.dataset.raw || "",
+      pickup: pickup.value,
+      drop: drop.value,
       custName: custName.value,
       custNumber: custNumber.value,
       driverName: driverName.value,
@@ -139,6 +158,8 @@
       endKM: endKM.value,
       totalKM: totalKM.value,
       extraKM: extraKM.value,
+      totalAmount: totalAmount.value,
+      paymentStatus: paymentStatus.value,
       note: note.value
     };
     let arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
@@ -151,11 +172,13 @@
 
   function shareWhatsApp() {
     const msg = `📋 *TRIP SUMMARY*\n\n*Trip ID:* ${tripId.value}\n*Date:* ${tripDateDisplay.value}\n\n` +
+    `📍 *Pickup:* ${pickup.value}\n📍 *Drop:* ${drop.value}\n` +
     `👤 *Customer:* ${custName.value} (${custNumber.value})\n` +
     `🚖 *Driver:* ${driverName.value} (${driverNumber.value})\n` +
     `🚘 *Vehicle:* ${vehicleModel.value} (${vehicleNo.value})\n\n` +
     `🕒 *Time:* ${startTime.value} - ${endTime.value} (${duration.value} hrs, Extra ${extraHours.value} hrs)\n` +
     `📍 *KM:* ${startKM.value} - ${endKM.value} = ${totalKM.value} km (Extra ${extraKM.value} km)\n\n` +
+    `💰 *Total:* ₹${totalAmount.value} – *${paymentStatus.value}*\n` +
     `📝 *Note:* ${note.value || '-'}`;
     window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
   }
@@ -167,9 +190,12 @@
       return;
     }
     let html = `<h3>📋 Saved Trips</h3><table><tr>
-    <th>ID</th><th>Date</th><th>Customer</th><th>Driver</th><th>Vehicle</th><th>KM</th><th>Duration</th></tr>`;
+    <th>ID</th><th>Date</th><th>Pickup</th><th>Drop</th><th>Customer</th>
+    <th>Driver</th><th>Vehicle</th><th>Total ₹</th><th>Status</th></tr>`;
     arr.forEach(t => {
-      html += `<tr><td>${t.id}</td><td>${t.date}</td><td>${t.custName}</td><td>${t.driverName}</td><td>${t.vehicleModel}</td><td>${t.totalKM}</td><td>${t.duration}</td></tr>`;
+      html += `<tr><td>${t.id}</td><td>${t.date}</td><td>${t.pickup}</td><td>${t.drop}</td>
+      <td>${t.custName}</td><td>${t.driverName}</td><td>${t.vehicleModel}</td>
+      <td>${t.totalAmount}</td><td>${t.paymentStatus}</td></tr>`;
     });
     sharedTripsList.innerHTML = html + "</table>";
   }

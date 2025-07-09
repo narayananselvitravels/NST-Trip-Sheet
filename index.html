@@ -46,12 +46,12 @@
 <label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
 <label>End Time</label><input type="time" id="endTime" onchange="recalc()">
 <label>Duration (hrs)</label><input id="duration" readonly>
-<label>Extra Hours</label><input id="extraHours" readonly>
 
+<label>Extra Hours</label><input type="number" id="extraHours">
 <label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
 <label>End KM</label><input type="number" id="endKM" onchange="recalc()">
 <label>Total KM</label><input id="totalKM" readonly>
-<label>Extra KM</label><input id="extraKM" readonly>
+<label>Extra KM</label><input type="number" id="extraKM">
 
 <label>Note</label><textarea id="note" rows="3"></textarea>
 
@@ -111,14 +111,14 @@
 
   function recalc() {
     if (startTime.value && endTime.value) {
-      let s = new Date(`1970-01-01T${startTime.value}`), e = new Date(`1970-01-01T${endTime.value}`);
-      let diff = (e - s) / 3600000; if (diff < 0) diff += 24;
+      let s = new Date(`1970-01-01T${startTime.value}`);
+      let e = new Date(`1970-01-01T${endTime.value}`);
+      let diff = (e - s) / 3600000;
+      if (diff < 0) diff += 24;
       duration.value = Math.ceil(diff);
-      extraHours.value = duration.value > 8 ? duration.value - 8 : 0;
     }
     let total = endKM.value - startKM.value;
     totalKM.value = total;
-    extraKM.value = total > 80 ? total - 80 : 0;
   }
 
   function saveTrip() {

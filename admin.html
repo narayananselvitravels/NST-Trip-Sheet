@@ -3,211 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NST Trip Sheet</title>
+  <title>Admin Panel – NST Travels</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { font-family:'Poppins',sans-serif; margin:0 auto; padding:20px; max-width:800px; background:#f4f6f9 }
-    h2 { color:#4b2aad }
-    label { font-weight:bold; margin-top:10px; display:block }
-    input, select, textarea, button {
-      width:100%; padding:10px; margin:5px 0 15px;
-      border:1px solid #ccc; border-radius:5px; font-size:16px
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
+    h2 { color: #4b2aad; }
+    .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    button {
+      background: #4b2aad; color: white; border: none; padding: 12px 20px;
+      border-radius: 5px; font-size: 16px; cursor: pointer; margin-right: 10px;
     }
-    button { background:#4b2aad; color:#fff; border:none; cursor:pointer }
-    button:hover { background:#3a208b }
-    table { width:100%; border-collapse:collapse; margin-top:20px }
-    table, th, td { border:1px solid #ddd }
-    th, td { padding:8px; text-align:left }
-    th { background:#4b2aad; color:#fff }
+    button:hover { background: #3a208b; }
+    .danger { background: #dc3545; }
+    .danger:hover { background: #b02a37; }
+    p { font-size: 16px; margin: 10px 0; }
+    a { text-decoration: none; color: #4b2aad; font-weight: bold; }
   </style>
 </head>
 <body>
+  <h2>🛠️ NST Admin Panel</h2>
 
-<h2>📝 NST Trip Sheet</h2>
+  <div class="section">
+    <h3>📊 Shared Trip Stats</h3>
+    <p><strong>Trips Shared:</strong> <span id="tripCount">0</span></p>
+    <p><strong>Current Trip ID:</strong> <span id="currentId">#NST001</span></p>
+    <button onclick="exportTrips()">📥 Export Trips (Excel)</button>
+  </div>
 
-<label>Trip ID</label><input id="tripId" readonly>
+  <div class="section">
+    <h3>🔧 Master Data</h3>
+    <p><a href="driver-vehicle-master.html">🚗 Manage Driver & Vehicle Master</a></p>
+  </div>
 
-<label>Date</label>
-<div style="position:relative">
-  <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor:pointer">
-  <input type="date" id="tripDate" style="opacity:0;position:absolute;top:0;left:0;width:100%;height:100%;cursor:pointer">
-</div>
+  <div class="section">
+    <h3>⚠️ Reset System</h3>
+    <p>This will remove all trip, driver, and vehicle data, and reset everything.</p>
+    <button class="danger" onclick="resetAll()">🗑️ Reset All Data</button>
+  </div>
 
-<label>Pickup Location</label>
-<input id="pickup" list="locations" placeholder="Start typing...">
-<label>Drop Location</label>
-<input id="drop" list="locations" placeholder="Start typing...">
-<datalist id="locations">
-  <option value="Pondicherry"><option value="Chennai"><option value="Bangalore">
-  <option value="Villupuram"><option value="Tirupati"><option value="Madurai">
-  <option value="Coimbatore"><option value="Trichy"><option value="Salem">
-</datalist>
+  <script>
+    const SHKEY = "shared-trips";
 
-<label>Customer Name</label><input id="custName">
-<label>Customer Number</label><input id="custNumber">
-
-<label>Driver Name</label><select id="driverName" onchange="syncDriver(true)"></select>
-<label>Driver Number</label><select id="driverNumber" onchange="syncDriver(false)"></select>
-
-<label>Vehicle Model</label><select id="vehicleModel" onchange="syncVehicle(true)"></select>
-<label>Vehicle Number</label><select id="vehicleNo" onchange="syncVehicle(false)"></select>
-
-<label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
-<label>End Time</label><input type="time" id="endTime" onchange="recalc()">
-<label>Duration (hrs)</label><input id="duration" readonly>
-
-<label>Extra Hours</label><input type="number" id="extraHours">
-<label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
-<label>End KM</label><input type="number" id="endKM" onchange="recalc()">
-<label>Total KM</label><input id="totalKM" readonly>
-<label>Extra KM</label><input type="number" id="extraKM">
-
-<label>Total Amount ₹</label><input type="number" id="totalAmount">
-<label>Payment Status</label>
-<select id="paymentStatus">
-  <option>Paid</option>
-  <option>Not Paid</option>
-</select>
-
-<label>Note</label><textarea id="note" rows="3"></textarea>
-
-<button onclick="saveTrip()">💾 Save Trip</button>
-<button onclick="shareWhatsApp()">📤 Share via WhatsApp</button>
-<button onclick="showSharedTrips()">📋 View Saved Trips</button>
-<button onclick="window.location.href='admin.html'">🔐 Admin Panel</button>
-
-<div id="sharedTripsList"></div>
-
-<script>
-  let drivers = {}, vehicles = {};
-  const SHKEY = "shared-trips";
-
-  function init() {
-    const dList = JSON.parse(localStorage.getItem("driver-master") || "[]");
-    driverName.innerHTML = '<option value="">-- Select --</option>';
-    driverNumber.innerHTML = '<option value="">-- Select --</option>';
-    dList.forEach(d => {
-      drivers[d.name] = d.mobile;
-      driverName.innerHTML += `<option>${d.name}</option>`;
-      driverNumber.innerHTML += `<option>${d.mobile}</option>`;
-    });
-
-    const vList = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
-    vehicleModel.innerHTML = '<option value="">-- Select --</option>';
-    vehicleNo.innerHTML = '<option value="">-- Select --</option>';
-    vList.forEach(v => {
-      vehicles[v.model] = v.number;
-      vehicleModel.innerHTML += `<option>${v.model}</option>`;
-      vehicleNo.innerHTML += `<option>${v.number}</option>`;
-    });
-
-    tripId.value = genId();
-  }
-
-  function genId() {
-    let n = parseInt(localStorage.getItem("trip-seq") || "1");
-    return "#NST" + String(n).padStart(3, "0");
-  }
-
-  function reserveId() {
-    let n = parseInt(localStorage.getItem("trip-seq") || "1");
-    localStorage.setItem("#NST" + String(n).padStart(3, "0"), "used");
-    localStorage.setItem("trip-seq", n + 1);
-  }
-
-  function syncDriver(fromName) {
-    if (fromName) driverNumber.value = drivers[driverName.value] || "";
-    else for (let k in drivers) if (drivers[k] === driverNumber.value) driverName.value = k;
-  }
-
-  function syncVehicle(fromModel) {
-    if (fromModel) vehicleNo.value = vehicles[vehicleModel.value] || "";
-    else for (let k in vehicles) if (vehicles[k] === vehicleNo.value) vehicleModel.value = k;
-  }
-
-  function recalc() {
-    if (startTime.value && endTime.value) {
-      let s = new Date(`1970-01-01T${startTime.value}`);
-      let e = new Date(`1970-01-01T${endTime.value}`);
-      let diff = (e - s) / 3600000;
-      if (diff < 0) diff += 24;
-      duration.value = Math.ceil(diff);
+    function getTripCount() {
+      const shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+      document.getElementById("tripCount").innerText = shared.length;
     }
-    let total = endKM.value - startKM.value;
-    totalKM.value = total;
-  }
 
-  function saveTrip() {
-    const data = {
-      id: tripId.value,
-      date: tripDateDisplay.dataset.raw || "",
-      pickup: pickup.value,
-      drop: drop.value,
-      custName: custName.value,
-      custNumber: custNumber.value,
-      driverName: driverName.value,
-      driverNumber: driverNumber.value,
-      vehicleModel: vehicleModel.value,
-      vehicleNo: vehicleNo.value,
-      start: startTime.value,
-      end: endTime.value,
-      duration: duration.value,
-      extraHours: extraHours.value,
-      startKM: startKM.value,
-      endKM: endKM.value,
-      totalKM: totalKM.value,
-      extraKM: extraKM.value,
-      totalAmount: totalAmount.value,
-      paymentStatus: paymentStatus.value,
-      note: note.value
-    };
-    let arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-    arr.push(data);
-    localStorage.setItem(SHKEY, JSON.stringify(arr));
-    alert("✅ Trip saved successfully");
-    reserveId();
-    tripId.value = genId();
-  }
-
-  function shareWhatsApp() {
-    const msg = `📋 *TRIP SUMMARY*\n\n*Trip ID:* ${tripId.value}\n*Date:* ${tripDateDisplay.value}\n\n` +
-    `📍 *Pickup:* ${pickup.value}\n📍 *Drop:* ${drop.value}\n` +
-    `👤 *Customer:* ${custName.value} (${custNumber.value})\n` +
-    `🚖 *Driver:* ${driverName.value} (${driverNumber.value})\n` +
-    `🚘 *Vehicle:* ${vehicleModel.value} (${vehicleNo.value})\n\n` +
-    `🕒 *Time:* ${startTime.value} - ${endTime.value} (${duration.value} hrs, Extra ${extraHours.value} hrs)\n` +
-    `📍 *KM:* ${startKM.value} - ${endKM.value} = ${totalKM.value} km (Extra ${extraKM.value} km)\n\n` +
-    `💰 *Total:* ₹${totalAmount.value} – *${paymentStatus.value}*\n` +
-    `📝 *Note:* ${note.value || '-'}`;
-    window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-  }
-
-  function showSharedTrips() {
-    const arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-    if (!arr.length) {
-      sharedTripsList.innerHTML = "<p>No trips saved.</p>";
-      return;
+    function getCurrentId() {
+      let n = localStorage.getItem("trip-seq") || "1";
+      document.getElementById("currentId").innerText = "#NST" + String(n).padStart(3, "0");
     }
-    let html = `<h3>📋 Saved Trips</h3><table><tr>
-    <th>ID</th><th>Date</th><th>Pickup</th><th>Drop</th><th>Customer</th>
-    <th>Driver</th><th>Vehicle</th><th>Total ₹</th><th>Status</th></tr>`;
-    arr.forEach(t => {
-      html += `<tr><td>${t.id}</td><td>${t.date}</td><td>${t.pickup}</td><td>${t.drop}</td>
-      <td>${t.custName}</td><td>${t.driverName}</td><td>${t.vehicleModel}</td>
-      <td>${t.totalAmount}</td><td>${t.paymentStatus}</td></tr>`;
-    });
-    sharedTripsList.innerHTML = html + "</table>";
-  }
 
-  tripDate.addEventListener("change", () => {
-    const raw = tripDate.value, d = new Date(raw);
-    tripDateDisplay.value = d.toLocaleDateString("en-GB", { day: '2-digit', month: 'long', year: 'numeric' });
-    tripDateDisplay.dataset.raw = raw;
-  });
+    function exportTrips() {
+      const data = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+      if (!data.length) return alert("No shared trips to export.");
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "SharedTrips");
+      XLSX.writeFile(wb, "NST_Shared_Trips.xlsx");
+    }
 
-  window.onload = init;
-</script>
+    function resetAll() {
+      if (confirm("Are you sure? This will erase all trip data and master records.")) {
+        localStorage.removeItem("trip-seq");
+        localStorage.removeItem("shared-trips");
+        localStorage.removeItem("driver-master");
+        localStorage.removeItem("vehicle-master");
+        for (let key in localStorage) {
+          if (key.startsWith("#NST")) localStorage.removeItem(key);
+        }
+        alert("✅ All data has been reset.");
+        getTripCount();
+        getCurrentId();
+      }
+    }
 
+    getTripCount();
+    getCurrentId();
+  </script>
 </body>
 </html>

@@ -1,73 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Driver & Vehicle Master</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver & Vehicle Master – NST Travels</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body{font-family:Poppins,sans-serif;padding:20px;max-width:600px;margin:auto;background:#f4f6f9;}
-    h2{color:#4b2aad;} label{display:block;margin-top:10px;font-weight:600;}
-    input{width:100%;padding:8px;margin:5px 0;}
-    button{padding:10px;margin-top:10px;background:#4b2aad;color:white;border:none;cursor:pointer;}
-    button.danger{background:#dc3545;}
-    table{width:100%;border-collapse:collapse;margin-top:20px}
-    th,td{border:1px solid #ddd;padding:8px}
-    th{background:#4b2aad;color:white;}
+    body { font-family:'Poppins',sans-serif; background:#f4f6f9; max-width:800px; margin:30px auto; padding:20px; }
+    h2 { color:#4b2aad }
+    .section { background:white; padding:20px; border-radius:10px; box-shadow:0 0 5px rgba(0,0,0,0.1); margin-bottom:30px }
+    input, button {
+      width:100%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:5px; font-size:16px;
+    }
+    button { background:#4b2aad; color:#fff; border:none; cursor:pointer }
+    button:hover { background:#3a208b }
+    table { width:100%; border-collapse:collapse; margin-top:10px }
+    th, td { border:1px solid #ddd; padding:8px; text-align:left }
+    th { background:#4b2aad; color:#fff }
+    .danger { background:#dc3545 }
+    .danger:hover { background:#b02a37 }
   </style>
 </head>
 <body>
-<h2>🚗 Driver & Vehicle Master</h2>
 
-<h3>Add Driver</h3>
-<label>Name</label><input id="drvName">
-<label>Number</label><input id="drvNum">
-<button onclick="addDriver()">+ Add Driver</button>
+<h2>🧾 Driver & Vehicle Master</h2>
 
-<h3>Add Vehicle</h3>
-<label>Model</label><input id="vehModel">
-<label>Number</label><input id="vehNum">
-<label>Free KM</label><input id="vehKm" type="number">
-<label>Free Hours</label><input id="vehHrs" type="number">
-<button onclick="addVehicle()">+ Add Vehicle</button>
+<div class="section">
+  <h3>👨‍✈️ Driver Master</h3>
+  <input id="driverName" placeholder="Driver Name">
+  <input id="driverMobile" placeholder="Driver Mobile Number">
+  <button onclick="addDriver()">➕ Add Driver</button>
+  <table id="driverTable"></table>
+</div>
 
-<h3>Current Lists</h3>
-<h4>Drivers</h4><table id="drvTable"><tr><th>Name</th><th>Number</th><th>Delete</th></tr></table>
-<h4>Vehicles</h4><table id="vehTable"><tr><th>Model</th><th>Number</th><th>Free KM</th><th>Free Hrs</th><th>Delete</th></tr></table>
+<div class="section">
+  <h3>🚘 Vehicle Master</h3>
+  <input id="vehicleModel" placeholder="Vehicle Model">
+  <input id="vehicleNo" placeholder="Vehicle Number">
+  <button onclick="addVehicle()">➕ Add Vehicle</button>
+  <table id="vehicleTable"></table>
+</div>
 
 <script>
-function save(key, arr){ localStorage.setItem(key, JSON.stringify(arr)); }
-function load(key){ return JSON.parse(localStorage.getItem(key)||"[]"); }
+  function renderTables() {
+    let dList = JSON.parse(localStorage.getItem("driver-master") || "[]");
+    let dHTML = "<tr><th>Name</th><th>Mobile</th><th>Action</th></tr>";
+    dList.forEach((d, i) => {
+      dHTML += `<tr><td>${d.name}</td><td>${d.mobile}</td><td><button class="danger" onclick="deleteDriver(${i})">🗑️ Delete</button></td></tr>`;
+    });
+    driverTable.innerHTML = dHTML;
 
-function renderLists(){
-  const drv = load("driver-master"), veh = load("vehicle-master");
-  const dt = document.getElementById("drvTable"), vt = document.getElementById("vehTable");
-  dt.innerHTML = `<tr><th>Name</th><th>Number</th><th>Delete</th></tr>`;
-  drv.forEach((d,i)=> dt.innerHTML += `<tr><td>${d.name}</td><td>${d.number}</td><td><button onclick="delDrv(${i})">🗑️</button></td></tr>`);
-  vt.innerHTML = `<tr><th>Model</th><th>Number</th><th>Free KM</th><th>Free Hrs</th><th>Delete</th></tr>`;
-  veh.forEach((v,i)=> vt.innerHTML += `<tr><td>${v.model}</td><td>${v.number}</td><td>${v.freeKm}</td><td>${v.freeHrs}</td><td><button onclick="delVeh(${i})">🗑️</button></td></tr>`);
-}
+    let vList = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
+    let vHTML = "<tr><th>Model</th><th>Number</th><th>Action</th></tr>";
+    vList.forEach((v, i) => {
+      vHTML += `<tr><td>${v.model}</td><td>${v.number}</td><td><button class="danger" onclick="deleteVehicle(${i})">🗑️ Delete</button></td></tr>`;
+    });
+    vehicleTable.innerHTML = vHTML;
+  }
 
-function addDriver(){
-  const name = drvName.value.trim(), num = drvNum.value.trim();
-  if(!name||!num)return alert("Fill both fields");
-  const arr = load("driver-master");
-  arr.push({name,num}); save("driver-master",arr);
-  drvName.value=drvNum.value=""; renderLists();
-}
-function addVehicle(){
-  const m=vehModel.value.trim(), n=vehNum.value.trim(), k=vehKm.value, h=vehHrs.value;
-  if(!m||!n||!k||!h)return alert("Fill all fields");
-  const arr = load("vehicle-master");
-  arr.push({model:m,number:n,freeKm:parseInt(k),freeHrs:parseInt(h)});
-  save("vehicle-master",arr);
-  vehModel.value=vehNum.value=vehKm.value=vehHrs.value=""; renderLists();
-}
-function delDrv(i){
-  const arr=load("driver-master");arr.splice(i,1); save("driver-master",arr); renderLists();
-}
-function delVeh(i){
-  const arr=load("vehicle-master");arr.splice(i,1); save("vehicle-master",arr); renderLists();
-}
+  function addDriver() {
+    const name = driverName.value.trim();
+    const mobile = driverMobile.value.trim();
+    if (!name || !mobile) return alert("Enter driver name and number.");
+    let dList = JSON.parse(localStorage.getItem("driver-master") || "[]");
+    dList.push({ name, mobile });
+    localStorage.setItem("driver-master", JSON.stringify(dList));
+    driverName.value = ""; driverMobile.value = "";
+    renderTables();
+  }
 
-renderLists();
+  function addVehicle() {
+    const model = vehicleModel.value.trim();
+    const number = vehicleNo.value.trim();
+    if (!model || !number) return alert("Enter vehicle model and number.");
+    let vList = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
+    vList.push({ model, number });
+    localStorage.setItem("vehicle-master", JSON.stringify(vList));
+    vehicleModel.value = ""; vehicleNo.value = "";
+    renderTables();
+  }
+
+  function deleteDriver(i) {
+    if (!confirm("Delete this driver?")) return;
+    let dList = JSON.parse(localStorage.getItem("driver-master") || "[]");
+    dList.splice(i, 1);
+    localStorage.setItem("driver-master", JSON.stringify(dList));
+    renderTables();
+  }
+
+  function deleteVehicle(i) {
+    if (!confirm("Delete this vehicle?")) return;
+    let vList = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
+    vList.splice(i, 1);
+    localStorage.setItem("vehicle-master", JSON.stringify(vList));
+    renderTables();
+  }
+
+  renderTables();
 </script>
+
 </body>
 </html>

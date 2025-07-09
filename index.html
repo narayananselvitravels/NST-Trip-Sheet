@@ -5,21 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NST Trip Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { font-family:'Poppins',sans-serif; margin:0 auto; padding:20px; max-width:800px; background:#f4f6f9 }
+    body { font-family:'Poppins',sans-serif;margin:0 auto;padding:20px;max-width:800px;background:#f4f6f9 }
     h2 { color:#4b2aad }
-    label { font-weight:bold; margin-top:10px; display:block }
+    label { font-weight:bold;margin-top:10px;display:block }
     input, select, textarea, button {
-      width:100%; padding:10px; margin:5px 0 15px;
-      border:1px solid #ccc; border-radius:5px; font-size:16px
+      width:100%;padding:10px;margin:5px 0 15px;
+      border:1px solid #ccc;border-radius:5px;font-size:16px
     }
-    button { background:#4b2aad; color:#fff; border:none; cursor:pointer }
+    button { background:#4b2aad;color:#fff;border:none;cursor:pointer }
     button:hover { background:#3a208b }
-    table { width:100%; border-collapse:collapse; margin-top:20px }
-    table, th, td { border:1px solid #ddd }
-    th, td { padding:8px; text-align:left }
-    th { background:#4b2aad; color:#fff }
   </style>
 </head>
 <body>
@@ -35,179 +30,181 @@
 </div>
 
 <label>Pickup Location</label>
-<input id="pickup" list="locations" placeholder="Start typing...">
+<input type="text" id="pickupLocation" placeholder="Enter pickup location">
+
 <label>Drop Location</label>
-<input id="drop" list="locations" placeholder="Start typing...">
-<datalist id="locations">
-  <option value="Pondicherry"><option value="Chennai"><option value="Bangalore">
-  <option value="Villupuram"><option value="Tirupati"><option value="Madurai">
-  <option value="Coimbatore"><option value="Trichy"><option value="Salem">
-</datalist>
+<input type="text" id="dropLocation" placeholder="Enter drop location">
 
 <label>Customer Name</label><input id="custName">
 <label>Customer Number</label><input id="custNumber">
 
-<label>Driver Name</label><select id="driverName" onchange="syncDriver(true)"></select>
-<label>Driver Number</label><select id="driverNumber" onchange="syncDriver(false)"></select>
+<label>Driver Name</label>
+<select id="driverName" onchange="syncDriver(true)"><option value="">-- Select --</option></select>
 
-<label>Vehicle Model</label><select id="vehicleModel" onchange="syncVehicle(true)"></select>
-<label>Vehicle Number</label><select id="vehicleNo" onchange="syncVehicle(false)"></select>
+<label>Driver Number</label>
+<select id="driverNumber" onchange="syncDriver(false)"><option value="">-- Select --</option></select>
 
-<label>Start Time</label><input type="time" id="startTime" onchange="recalc()">
-<label>End Time</label><input type="time" id="endTime" onchange="recalc()">
-<label>Duration (hrs)</label><input id="duration" readonly>
+<label>Vehicle Model</label>
+<select id="vehicleModel" onchange="syncVehicle(true)"><option value="">-- Select --</option></select>
 
-<label>Extra Hours</label><input type="number" id="extraHours">
-<label>Start KM</label><input type="number" id="startKM" onchange="recalc()">
-<label>End KM</label><input type="number" id="endKM" onchange="recalc()">
-<label>Total KM</label><input id="totalKM" readonly>
-<label>Extra KM</label><input type="number" id="extraKM">
+<label>Vehicle Number</label>
+<select id="vehicleNo" onchange="syncVehicle(false)"><option value="">-- Select --</option></select>
 
-<label>Total Amount ₹</label><input type="number" id="totalAmount">
-<label>Payment Status</label>
-<select id="paymentStatus">
-  <option>Paid</option>
-  <option>Not Paid</option>
+<label>Start Time</label><input type="time" id="startTime">
+<label>End Time</label><input type="time" id="endTime">
+
+<label>Duration (hrs)</label><input id="duration">
+<label>Extra Hours</label><input id="extraHours">
+
+<label>Start KM</label><input type="number" id="startKM">
+<label>End KM</label><input type="number" id="endKM">
+
+<label>Total KM</label><input id="totalKM">
+<label>Extra KM</label><input id="extraKM">
+
+<label>Total Amount ₹</label><input id="totalAmount" type="number">
+<label>Status</label>
+<select id="status">
+  <option value="Paid">Paid</option>
+  <option value="Not Paid">Not Paid</option>
 </select>
 
-<label>Note</label><textarea id="note" rows="3"></textarea>
+<label>Parking ₹</label><input type="number" id="parking" value="0">
+<label>Toll ₹</label><input type="number" id="toll" value="0">
 
-<button onclick="saveTrip()">💾 Save Trip</button>
+<label>Note</label><textarea id="note" rows="3" placeholder="Enter any trip notes..."></textarea>
+
 <button onclick="shareWhatsApp()">📤 Share via WhatsApp</button>
-<button onclick="showSharedTrips()">📋 View Saved Trips</button>
-<button onclick="window.location.href='admin.html'">🔐 Admin Panel</button>
-
-<div id="sharedTripsList"></div>
 
 <script>
-  let drivers = {}, vehicles = {};
-  const SHKEY = "shared-trips";
+const SHKEY = "shared-trips";
 
-  function init() {
-    const dList = JSON.parse(localStorage.getItem("driver-master") || "[]");
-    driverName.innerHTML = '<option value="">-- Select --</option>';
-    driverNumber.innerHTML = '<option value="">-- Select --</option>';
-    dList.forEach(d => {
-      drivers[d.name] = d.mobile;
-      driverName.innerHTML += `<option>${d.name}</option>`;
-      driverNumber.innerHTML += `<option>${d.mobile}</option>`;
-    });
+// Load driver and vehicle options
+function loadDropdowns() {
+  const drivers = JSON.parse(localStorage.getItem("driver-master") || "[]");
+  const vehicles = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
 
-    const vList = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
-    vehicleModel.innerHTML = '<option value="">-- Select --</option>';
-    vehicleNo.innerHTML = '<option value="">-- Select --</option>';
-    vList.forEach(v => {
-      vehicles[v.model] = v.number;
-      vehicleModel.innerHTML += `<option>${v.model}</option>`;
-      vehicleNo.innerHTML += `<option>${v.number}</option>`;
-    });
-
-    tripId.value = genId();
-  }
-
-  function genId() {
-    let n = parseInt(localStorage.getItem("trip-seq") || "1");
-    return "#NST" + String(n).padStart(3, "0");
-  }
-
-  function reserveId() {
-    let n = parseInt(localStorage.getItem("trip-seq") || "1");
-    localStorage.setItem("#NST" + String(n).padStart(3, "0"), "used");
-    localStorage.setItem("trip-seq", n + 1);
-  }
-
-  function syncDriver(fromName) {
-    if (fromName) driverNumber.value = drivers[driverName.value] || "";
-    else for (let k in drivers) if (drivers[k] === driverNumber.value) driverName.value = k;
-  }
-
-  function syncVehicle(fromModel) {
-    if (fromModel) vehicleNo.value = vehicles[vehicleModel.value] || "";
-    else for (let k in vehicles) if (vehicles[k] === vehicleNo.value) vehicleModel.value = k;
-  }
-
-  function recalc() {
-    if (startTime.value && endTime.value) {
-      let s = new Date(`1970-01-01T${startTime.value}`);
-      let e = new Date(`1970-01-01T${endTime.value}`);
-      let diff = (e - s) / 3600000;
-      if (diff < 0) diff += 24;
-      duration.value = Math.ceil(diff);
-    }
-    let total = endKM.value - startKM.value;
-    totalKM.value = total;
-  }
-
-  function saveTrip() {
-    const data = {
-      id: tripId.value,
-      date: tripDateDisplay.dataset.raw || "",
-      pickup: pickup.value,
-      drop: drop.value,
-      custName: custName.value,
-      custNumber: custNumber.value,
-      driverName: driverName.value,
-      driverNumber: driverNumber.value,
-      vehicleModel: vehicleModel.value,
-      vehicleNo: vehicleNo.value,
-      start: startTime.value,
-      end: endTime.value,
-      duration: duration.value,
-      extraHours: extraHours.value,
-      startKM: startKM.value,
-      endKM: endKM.value,
-      totalKM: totalKM.value,
-      extraKM: extraKM.value,
-      totalAmount: totalAmount.value,
-      paymentStatus: paymentStatus.value,
-      note: note.value
-    };
-    let arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-    arr.push(data);
-    localStorage.setItem(SHKEY, JSON.stringify(arr));
-    alert("✅ Trip saved successfully");
-    reserveId();
-    tripId.value = genId();
-  }
-
-  function shareWhatsApp() {
-    const msg = `📋 *TRIP SUMMARY*\n\n*Trip ID:* ${tripId.value}\n*Date:* ${tripDateDisplay.value}\n\n` +
-    `📍 *Pickup:* ${pickup.value}\n📍 *Drop:* ${drop.value}\n` +
-    `👤 *Customer:* ${custName.value} (${custNumber.value})\n` +
-    `🚖 *Driver:* ${driverName.value} (${driverNumber.value})\n` +
-    `🚘 *Vehicle:* ${vehicleModel.value} (${vehicleNo.value})\n\n` +
-    `🕒 *Time:* ${startTime.value} - ${endTime.value} (${duration.value} hrs, Extra ${extraHours.value} hrs)\n` +
-    `📍 *KM:* ${startKM.value} - ${endKM.value} = ${totalKM.value} km (Extra ${extraKM.value} km)\n\n` +
-    `💰 *Total:* ₹${totalAmount.value} – *${paymentStatus.value}*\n` +
-    `📝 *Note:* ${note.value || '-'}`;
-    window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-  }
-
-  function showSharedTrips() {
-    const arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
-    if (!arr.length) {
-      sharedTripsList.innerHTML = "<p>No trips saved.</p>";
-      return;
-    }
-    let html = `<h3>📋 Saved Trips</h3><table><tr>
-    <th>ID</th><th>Date</th><th>Pickup</th><th>Drop</th><th>Customer</th>
-    <th>Driver</th><th>Vehicle</th><th>Total ₹</th><th>Status</th></tr>`;
-    arr.forEach(t => {
-      html += `<tr><td>${t.id}</td><td>${t.date}</td><td>${t.pickup}</td><td>${t.drop}</td>
-      <td>${t.custName}</td><td>${t.driverName}</td><td>${t.vehicleModel}</td>
-      <td>${t.totalAmount}</td><td>${t.paymentStatus}</td></tr>`;
-    });
-    sharedTripsList.innerHTML = html + "</table>";
-  }
-
-  tripDate.addEventListener("change", () => {
-    const raw = tripDate.value, d = new Date(raw);
-    tripDateDisplay.value = d.toLocaleDateString("en-GB", { day: '2-digit', month: 'long', year: 'numeric' });
-    tripDateDisplay.dataset.raw = raw;
+  drivers.forEach(d => {
+    driverName.innerHTML += `<option>${d.name}</option>`;
+    driverNumber.innerHTML += `<option>${d.mobile}</option>`;
   });
 
-  window.onload = init;
+  vehicles.forEach(v => {
+    vehicleModel.innerHTML += `<option>${v.model}</option>`;
+    vehicleNo.innerHTML += `<option>${v.number}</option>`;
+  });
+}
+
+// ID & Date
+function genId() {
+  let n = parseInt(localStorage.getItem("trip-seq")||"1");
+  return "#NST"+String(n).padStart(3,"0");
+}
+function reserveNextId() {
+  let c = parseInt(localStorage.getItem("trip-seq")||"1");
+  localStorage.setItem("trip-seq",c+1);
+}
+tripId.value = genId();
+tripDate.addEventListener("change", () => {
+  const raw = tripDate.value, d=new Date(raw);
+  tripDateDisplay.value = d.toLocaleDateString("en-GB", {day:'2-digit',month:'long',year:'numeric'});
+  tripDateDisplay.dataset.raw = raw;
+});
+
+function syncDriver(fromName) {
+  const drivers = JSON.parse(localStorage.getItem("driver-master") || "[]");
+  if (fromName) {
+    const selected = drivers.find(d => d.name === driverName.value);
+    if (selected) driverNumber.value = selected.mobile;
+  } else {
+    const selected = drivers.find(d => d.mobile === driverNumber.value);
+    if (selected) driverName.value = selected.name;
+  }
+}
+function syncVehicle(fromModel) {
+  const vehicles = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
+  if (fromModel) {
+    const selected = vehicles.find(v => v.model === vehicleModel.value);
+    if (selected) vehicleNo.value = selected.number;
+  } else {
+    const selected = vehicles.find(v => v.number === vehicleNo.value);
+    if (selected) vehicleModel.value = selected.model;
+  }
+}
+
+function to12Hr(t) {
+  if (!t) return "";
+  const [h,m]=t.split(":"); let d=new Date(); d.setHours(h,m);
+  return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+}
+
+function shareWhatsApp() {
+  const rawDate = tripDateDisplay.dataset.raw;
+  if (!rawDate) return alert("Select date");
+
+  const data = {
+    id: tripId.value,
+    date: rawDate,
+    pickup: pickupLocation.value,
+    drop: dropLocation.value,
+    custName: custName.value,
+    custNo: custNumber.value,
+    driverName: driverName.value,
+    driverNo: driverNumber.value,
+    model: vehicleModel.value,
+    vehicleNo: vehicleNo.value,
+    start: startTime.value,
+    end: endTime.value,
+    duration: duration.value,
+    extraH: extraHours.value,
+    totalKM: totalKM.value,
+    extraKM: extraKM.value,
+    totalAmount: totalAmount.value,
+    status: status.value,
+    parking: parking.value,
+    toll: toll.value,
+    note: note.value
+  };
+
+  const msg = `📋 *TRIP SUMMARY*\n\n*TRIP ID:* ${data.id}\n*DATE:* ${tripDateDisplay.value}\n\n` +
+    `📍 *Pickup:* ${data.pickup}\n📍 *Drop:* ${data.drop}\n\n` +
+    `👤 *Customer:* ${data.custName} (${data.custNo})\n` +
+    `👨‍✈️ *Driver:* ${data.driverName} (${data.driverNo})\n` +
+    `🚘 *Vehicle:* ${data.model} – ${data.vehicleNo}\n\n` +
+    `🕒 *Time:* ${to12Hr(data.start)} to ${to12Hr(data.end)}\n` +
+    `📏 *Duration:* ${data.duration} hrs | Extra Hrs: ${data.extraH}\n` +
+    `📍 *KM:* ${data.totalKM} km | Extra KM: ${data.extraKM}\n\n` +
+    `💰 *Amount:* ₹${data.totalAmount} | ${data.status}\n🚧 Parking: ₹${data.parking} | Toll: ₹${data.toll}\n\n` +
+    `📝 Note: ${data.note || "-"}`;
+
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+
+  // Save
+  let trips = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+  trips.push(data);
+  localStorage.setItem(SHKEY, JSON.stringify(trips));
+
+  reserveNextId();
+  tripId.value = genId();
+}
+loadDropdowns();
 </script>
+
+<!-- Google Places API -->
+<script>
+let pickupAutocomplete, dropAutocomplete;
+function initAutocomplete() {
+  pickupAutocomplete = new google.maps.places.Autocomplete(
+    document.getElementById("pickupLocation"),
+    { types: ["geocode"], componentRestrictions: { country: "in" } }
+  );
+  dropAutocomplete = new google.maps.places.Autocomplete(
+    document.getElementById("dropLocation"),
+    { types: ["geocode"], componentRestrictions: { country: "in" } }
+  );
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAFSQJTGHRBDbW_ph7kV2VPT5psO9wfDHQ&libraries=places&callback=initAutocomplete" async defer></script>
 
 </body>
 </html>

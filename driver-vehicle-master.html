@@ -3,141 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Driver & Vehicle Master – NST</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <title>Admin Panel – NST Travels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f6f9;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-    h2 {
-      color: #4b2aad;
-      margin-bottom: 20px;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-      display: block;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
-    }
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; max-width: 800px; margin: 30px auto; padding: 20px; }
+    h2 { color: #4b2aad; }
+    .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
     button {
-      background: #4b2aad;
-      color: white;
-      border: none;
-      cursor: pointer;
+      background: #4b2aad; color: white; border: none; padding: 12px 20px;
+      border-radius: 5px; font-size: 16px; cursor: pointer; margin-right: 10px;
     }
-    button:hover {
-      background: #3a208b;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background-color: #4b2aad;
-      color: white;
-    }
+    button:hover { background: #3a208b; }
+    .danger { background: #dc3545; }
+    .danger:hover { background: #b02a37; }
+    p { font-size: 16px; margin: 10px 0; }
   </style>
 </head>
 <body>
+  <h2>🛠️ NST Admin Panel</h2>
 
-  <h2>👨‍✈️ Driver & 🚘 Vehicle Master</h2>
+  <div class="section">
+    <h3>📊 Shared Trip Stats</h3>
+    <p><strong>Trips Shared:</strong> <span id="tripCount">0</span></p>
+    <p><strong>Current Trip ID:</strong> <span id="currentId">#NST001</span></p>
+    <button onclick="exportTrips()">📥 Export Shared Trips (Excel)</button>
+    <button onclick="location.href='driver-vehicle-master.html'">🧾 Driver & Vehicle Master</button>
+  </div>
 
-  <!-- Add Driver -->
-  <label>Driver Name</label>
-  <input type="text" id="driverName" placeholder="Enter driver name" />
-  <label>Driver Number</label>
-  <input type="text" id="driverMobile" placeholder="Enter driver mobile" />
-  <button onclick="addDriver()">➕ Add Driver</button>
+  <div class="section">
+    <h3>⚠️ Reset System</h3>
+    <p>This will remove all trip data and reset the Trip ID to <strong>#NST001</strong>.</p>
+    <button class="danger" onclick="resetAll()">🗑️ Reset All Data</button>
+  </div>
 
-  <!-- Add Vehicle -->
-  <label>Vehicle Model</label>
-  <input type="text" id="vehicleModel" placeholder="Enter vehicle model" />
-  <label>Vehicle Number</label>
-  <input type="text" id="vehicleNo" placeholder="Enter vehicle number" />
-  <button onclick="addVehicle()">➕ Add Vehicle</button>
+  <script>
+    const SHKEY = "shared-trips";
 
-  <!-- Driver Table -->
-  <h3>📋 Driver List</h3>
-  <table id="driverTable">
-    <thead>
-      <tr><th>Name</th><th>Mobile</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    function getTripCount() {
+      let shared = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+      document.getElementById("tripCount").innerText = shared.length;
+    }
 
-  <!-- Vehicle Table -->
-  <h3>📋 Vehicle List</h3>
-  <table id="vehicleTable">
-    <thead>
-      <tr><th>Model</th><th>Number</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    function getCurrentId() {
+      let c = localStorage.getItem("trip-seq") || "1";
+      document.getElementById("currentId").innerText = "#NST" + String(c).padStart(3, "0");
+    }
 
-<script>
-function addDriver() {
-  const name = driverName.value.trim();
-  const mobile = driverMobile.value.trim();
-  if (!name || !mobile) return alert('Please fill both driver fields.');
-  let drivers = JSON.parse(localStorage.getItem('driver-master') || '[]');
-  drivers.push({ name, mobile });
-  localStorage.setItem('driver-master', JSON.stringify(drivers));
-  driverName.value = '';
-  driverMobile.value = '';
-  loadDrivers();
-}
+    function exportTrips() {
+      const data = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+      if (!data.length) return alert("No shared trips to export.");
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "SharedTrips");
+      XLSX.writeFile(wb, "NST_Shared_Trips.xlsx");
+    }
 
-function addVehicle() {
-  const model = vehicleModel.value.trim();
-  const number = vehicleNo.value.trim();
-  if (!model || !number) return alert('Please fill both vehicle fields.');
-  let vehicles = JSON.parse(localStorage.getItem('vehicle-master') || '[]');
-  vehicles.push({ model, number });
-  localStorage.setItem('vehicle-master', JSON.stringify(vehicles));
-  vehicleModel.value = '';
-  vehicleNo.value = '';
-  loadVehicles();
-}
+    function resetAll() {
+      if (confirm("Are you sure? This will erase all trip data and reset everything.")) {
+        localStorage.removeItem("trip-seq");
+        localStorage.removeItem("shared-trips");
+        for (let key in localStorage) {
+          if (key.startsWith("#NST")) localStorage.removeItem(key);
+        }
+        alert("✅ Data cleared and system reset.");
+        getTripCount();
+        getCurrentId();
+      }
+    }
 
-function loadDrivers() {
-  const table = document.querySelector('#driverTable tbody');
-  table.innerHTML = '';
-  const drivers = JSON.parse(localStorage.getItem('driver-master') || '[]');
-  drivers.forEach(d => {
-    table.innerHTML += `<tr><td>${d.name}</td><td>${d.mobile}</td></tr>`;
-  });
-}
-
-function loadVehicles() {
-  const table = document.querySelector('#vehicleTable tbody');
-  table.innerHTML = '';
-  const vehicles = JSON.parse(localStorage.getItem('vehicle-master') || '[]');
-  vehicles.forEach(v => {
-    table.innerHTML += `<tr><td>${v.model}</td><td>${v.number}</td></tr>`;
-  });
-}
-
-// Load all on page load
-loadDrivers();
-loadVehicles();
-</script>
-
+    getTripCount();
+    getCurrentId();
+  </script>
 </body>
 </html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WhatsApp Share – NST</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; padding: 20px; max-width: 700px; margin: 30px auto; }
+    h2 { color: #4b2aad; }
+    pre { background: #fff; padding: 15px; border: 1px solid #ccc; border-radius: 8px; white-space: pre-wrap }
+    button {
+      background: #4b2aad; color: #fff; padding: 12px 20px;
+      border: none; border-radius: 6px; font-size: 16px; margin-top: 15px; cursor: pointer;
+    }
+    button:hover { background: #3a208b; }
+    .back-btn { background: #6c757d; margin-right: 10px; }
+  </style>
+</head>
+<body>
+
+<h2>📤 WhatsApp Trip Summary</h2>
+
+<pre id="tripSummary">Loading trip summary...</pre>
+
+<div>
+  <button class="back-btn" onclick="window.location.href='index.html'">⬅️ Back to Main Page</button>
+  <button onclick="shareNow()">📤 Share via WhatsApp</button>
+</div>
+
+<script>
+  const SHKEY = "shared-trips";
+
+  function to12Hr(t) {
+    if (!t) return "-";
+    const [h, m] = t.split(":");
+    let d = new Date();
+    d.setHours(h, m);
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
+
+  function formatMsg(t) {
+    return `📋 *NST TRIP SUMMARY*\n\n` +
+
+    `🗓️ *TRIP DETAILS*\n` +
+    `• *Trip ID:* ${t.id || '-'}\n` +
+    `• *Date:* ${t.date || '-'}\n\n` +
+
+    `📍 *LOCATIONS*\n` +
+    `• *Pickup:* ${t.pickup || '-'}\n` +
+    `• *Drop:* ${t.drop || '-'}\n\n` +
+
+    `👤 *CUSTOMER INFO*\n` +
+    `• *Name:* ${t.custName || '-'}\n` +
+    `• *Number:* ${t.custNumber || '-'}\n\n` +
+
+    `👨‍✈️ *DRIVER INFO*\n` +
+    `• *Name:* ${t.driverName || '-'}\n` +
+    `• *Number:* ${t.driverNumber || '-'}\n\n` +
+
+    `🚘 *VEHICLE INFO*\n` +
+    `• *Model:* ${t.vehicleModel || '-'}\n` +
+    `• *Number:* ${t.vehicleNo || '-'}\n\n` +
+
+    `🕒 *TIME DETAILS*\n` +
+    `• *Start Time:* ${to12Hr(t.start)}\n` +
+    `• *End Time:* ${to12Hr(t.end)}\n` +
+    `• *Duration:* ${t.duration || '-'} hrs\n` +
+    `• *Extra Hours:* ${t.extraHours || '0'}\n\n` +
+
+    `📏 *DISTANCE DETAILS*\n` +
+    `• *Start KM:* ${t.startKM || '0'}\n` +
+    `• *End KM:* ${t.endKM || '0'}\n` +
+    `• *Total KM:* ${t.totalKM || '0'} km\n` +
+    `• *Extra KM:* ${t.extraKM || '0'} km\n\n` +
+
+    `💰 *FARE DETAILS*\n` +
+    `• *Parking:* ₹${t.parking || '0'}\n` +
+    `• *Toll:* ₹${t.toll || '0'}\n` +
+    `• *Total Amount:* ₹${t.totalAmount || '0'}\n` +
+    `• *Payment Status:* ${t.paymentStatus || '-'}\n\n` +
+
+    `📝 *NOTE*\n${t.note || '-'}`;
+  }
+
+  function shareNow() {
+    const arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+    const t = arr[arr.length - 1];
+    if (!t) return alert("❌ No saved trip found.");
+    const msg = formatMsg(t);
+    window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
+  }
+
+  // On load
+  window.onload = () => {
+    const arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
+    const t = arr[arr.length - 1];
+    if (!t) document.getElementById("tripSummary").innerText = "No trip found.";
+    else document.getElementById("tripSummary").innerText = formatMsg(t);
+  };
+</script>
+
+</body>
+</html>

@@ -1,33 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NST Trip Sheet</title>
+<head><meta charset="UTF-8"><title>NST Trip Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { font-family:'Poppins',sans-serif; max-width:800px; margin:20px auto; background:#f4f6f9; padding:20px; }
-    h2 { color:#4b2aad }
-    label { display:block; margin-top:10px; font-weight:600 }
-    input, select, textarea, button {
-      width:100%; padding:10px; margin:5px 0 15px;
-      border:1px solid #ccc; border-radius:5px; font-size:16px;
-    }
-    button { background:#4b2aad; color:white; border:none; cursor:pointer }
-    button:hover { background:#3a208b }
+    body{font-family:Poppins,sans-serif;margin:20px auto;max-width:800px;background:#f4f6f9;padding:20px;}
+    h2{color:#4b2aad;}label{display:block;margin-top:10px;font-weight:600;}
+    input,select,textarea,button{width:100%;padding:10px;margin:5px 0;border:1px solid #ccc;border-radius:5px;}
+    button{background:#4b2aad;color:white;border:none;cursor:pointer;}
+    button:hover{background:#3a208b;}
+    table{width:100%;border-collapse:collapse;margin-top:20px;}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+    th{background:#4b2aad;color:white;}
   </style>
 </head>
 <body>
-
 <h2>📝 NST Trip Sheet</h2>
 
 <label>Trip ID</label><input id="tripId" readonly>
-
 <label>Date</label>
 <div style="position:relative">
-  <input type="text" id="tripDateDisplay" placeholder="Select Date" readonly style="cursor:pointer">
-  <input type="date" id="tripDate" style="position:absolute;top:0;left:0;opacity:0;width:100%;height:100%;cursor:pointer">
+  <input id="tripDateDisplay" placeholder="Select Date" readonly style="cursor:pointer">
+  <input type="date" id="tripDate" style="position:absolute;opacity:0;top:0;left:0;width:100%;height:100%;cursor:pointer;">
 </div>
 
 <label>Customer Name</label><input id="custName">
@@ -51,20 +45,19 @@
 
 <label>Parking ₹</label><input type="number" id="parking" value="0">
 <label>Toll ₹</label><input type="number" id="toll" value="0">
-<label>Note</label><textarea id="note" rows="2"></textarea>
+<label>Note</label><textarea id="note"></textarea>
 
 <div>
   <button onclick="shareWhatsApp()">📤 Share via WhatsApp</button>
   <button onclick="showSharedTrips()">📋 View Shared Trips</button>
-  <button onclick="exportSharedTrips()">📥 Export to Excel</button>
+  <button onclick="exportTrips()">📥 Export Trips</button>
   <button onclick="document.getElementById('adminLogin').style.display='block'" style="background:#6c757d">🔐 Admin Panel</button>
 </div>
 
 <div id="sharedTripsList"></div>
 
-<!-- Admin Login Modal -->
-<div id="adminLogin" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999">
-  <div style="background:white;max-width:300px;margin:100px auto;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.3)">
+<div id="adminLogin" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);">
+  <div style="background:white;max-width:300px;margin:100px auto;padding:20px;border-radius:5px;">
     <h3>🔐 Admin Login</h3>
     <label>Username</label><input id="adminUser">
     <label>Password</label><input type="password" id="adminPass">
@@ -74,153 +67,123 @@
 </div>
 
 <script>
-const tripSeqKey = "trip-seq";
-const tripDataKey = "shared-trips";
+const DRV_KEY="driver-master", VEH_KEY="vehicle-master", TRIP_KEY="shared-trips", SEQ_KEY="trip-seq";
 
-function formatDate(raw) {
-  const d = new Date(raw);
-  return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
-}
-function to12Hr(t) {
-  if (!t) return "";
-  const [h,m]=t.split(":"); let d=new Date(); d.setHours(h,m);
-  return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'});
-}
-function genTripId() {
-  let n = parseInt(localStorage.getItem(tripSeqKey)||"1");
-  return "#NST" + String(n).padStart(3,"0");
-}
-function reserveTripId() {
-  let c = parseInt(localStorage.getItem(tripSeqKey)||"1");
-  localStorage.setItem("#NST"+String(c).padStart(3,"0"),"used");
-  localStorage.setItem(tripSeqKey, c+1);
-  tripId.value = genTripId();
+function load(key){return JSON.parse(localStorage.getItem(key)||"[]");}
+function save(key,arr){localStorage.setItem(key,JSON.stringify(arr));}
+function fmtDate(raw){const d=new Date(raw); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;}
+function to12Hr(t){ if(!t) return ""; const [h,m]=t.split(":"); const d=new Date(); d.setHours(h,m); return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});}
+function genId(){return "#NST" + String(parseInt(localStorage.getItem(SEQ_KEY)||"1")).padStart(3,"0");}
+function incSeq(){let n=parseInt(localStorage.getItem(SEQ_KEY)||"1");localStorage.setItem(SEQ_KEY,n+1); tripId.value=genId();}
+
+function populate(){
+  const dr=load(DRV_KEY), vh=load(VEH_KEY);
+  driverName.innerHTML="<option>-- Select --</option>"+dr.map(d=>`<option>${d.name}</option>`).join("");
+  driverNumber.innerHTML="<option>-- Select --</option>"+dr.map(d=>`<option>${d.number}</option>`).join("");
+  vehicleModel.innerHTML="<option>-- Select --</option>"+vh.map(v=>`<option>${v.model}</option>`).join("");
+  vehicleNo.innerHTML="<option>-- Select --</option>"+vh.map(v=>`<option>${v.number}</option>`).join("");
 }
 
-function populateDropdowns() {
-  const drivers = JSON.parse(localStorage.getItem("driver-master") || "[]");
-  const vehicles = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
-
-  driverName.innerHTML = "<option value=''>-- Select --</option>" + drivers.map(d => `<option>${d.name}</option>`).join('');
-  driverNumber.innerHTML = "<option value=''>-- Select --</option>" + drivers.map(d => `<option>${d.number}</option>`).join('');
-  vehicleModel.innerHTML = "<option value=''>-- Select --</option>" + vehicles.map(v => `<option>${v.model}</option>`).join('');
-  vehicleNo.innerHTML = "<option value=''>-- Select --</option>" + vehicles.map(v => `<option>${v.number}</option>`).join('');
-}
-
-function syncDriver(fromName) {
-  const data = JSON.parse(localStorage.getItem("driver-master") || "[]");
-  if (fromName) {
-    const d = data.find(x => x.name === driverName.value);
-    driverNumber.value = d?.number || "";
+function syncDriver(fromName){
+  const dr=load(DRV_KEY);
+  if(fromName){
+    const sel=dr.find(d=>d.name===driverName.value);
+    driverNumber.value=sel?.number||"";
   } else {
-    const d = data.find(x => x.number === driverNumber.value);
-    driverName.value = d?.name || "";
+    const sel=dr.find(d=>d.number===driverNumber.value);
+    driverName.value=sel?.name||"";
   }
 }
 
-function syncVehicle(fromModel) {
-  const data = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
-  if (fromModel) {
-    const v = data.find(x => x.model === vehicleModel.value);
-    vehicleNo.value = v?.number || "";
+function syncVehicle(fromMod){
+  const vh=load(VEH_KEY);
+  if(fromMod){
+    const sel=vh.find(v=>v.model===vehicleModel.value);
+    vehicleNo.value=sel?.number||"";
   } else {
-    const v = data.find(x => x.number === vehicleNo.value);
-    vehicleModel.value = v?.model || "";
+    const sel=vh.find(v=>v.number===vehicleNo.value);
+    vehicleModel.value=sel?.model||"";
   }
   recalc();
 }
 
-function recalc() {
-  const vehicle = JSON.parse(localStorage.getItem("vehicle-master") || "[]")
-    .find(v => v.model === vehicleModel.value);
-  const freeHrs = vehicle?.freeHrs || 8;
-  const freeKm = vehicle?.freeKm || 80;
+function recalc(){
+  const vh=load(VEH_KEY).find(v=>v.model===vehicleModel.value);
+  const freeH=vh?.freeHrs||8, freeK=vh?.freeKm||80;
 
-  if (startTime.value && endTime.value) {
-    let s = new Date("1970-01-01T" + startTime.value);
-    let e = new Date("1970-01-01T" + endTime.value);
-    let diff = (e - s) / 3600000;
-    if (diff < 0) diff += 24;
-    let dur = Math.ceil(diff);
-    duration.value = dur;
-    extraHours.value = dur > freeHrs ? dur - freeHrs : 0;
+  if(startTime.value && endTime.value){
+    let s=new Date(`1970-01-01T${startTime.value}`),
+        e=new Date(`1970-01-01T${endTime.value}`),
+        diff=(e-s)/3600000;
+    if(diff<0) diff+=24;
+    duration.value=Math.ceil(diff);
+    extraHours.value=Math.max(0,Math.ceil(diff)-freeH);
   }
-
-  if (startKM.value && endKM.value) {
-    let total = endKM.value - startKM.value;
-    totalKM.value = total;
-    extraKM.value = total > freeKm ? total - freeKm : 0;
+  if(startKM.value && endKM.value){
+    let t=endKM.value-startKM.value;
+    totalKM.value=t;
+    extraKM.value=Math.max(0,t-freeK);
   }
 }
 
-function shareWhatsApp() {
-  if (!tripDateDisplay.dataset.raw) return alert("Select date first.");
-  const data = {
-    id: tripId.value, date: tripDateDisplay.dataset.raw,
-    custName: custName.value, custNo: custNumber.value,
-    driverName: driverName.value, driverNo: driverNumber.value,
-    model: vehicleModel.value, vehicleNo: vehicleNo.value,
-    start: startTime.value, end: endTime.value,
-    duration: duration.value, extraH: extraHours.value,
-    totalKM: totalKM.value, extraKM: extraKM.value,
-    parking: parking.value, toll: toll.value, note: note.value
+function shareWhatsApp(){
+  if(!tripDateDisplay.dataset.raw) return alert("Select Date");
+  const data={
+    id:tripId.value, date:tripDateDisplay.dataset.raw,
+    custName:custName.value, custNo:custNumber.value,
+    driverName:driverName.value, driverNo:driverNumber.value,
+    model:vehicleModel.value, vehicleNo:vehicleNo.value,
+    start:startTime.value, end:endTime.value,
+    duration:duration.value, extraH:extraHours.value,
+    totalKM:totalKM.value, extraKM:extraKM.value,
+    parking:parking.value, toll:toll.value, note:note.value
   };
-
-  const msg = `📋 *TRIP SUMMARY*\n\n*TRIP ID:* ${data.id}\n*DATE:* ${formatDate(data.date)}\n\n`+
+  const msg=`📋 *TRIP SUMMARY*\n\n*TRIP ID:* ${data.id}\n*DATE:* ${fmtDate(data.date)}\n\n`+
     `👤 *CUSTOMER INFO*\n• *Name:* ${data.custName}\n• *Number:* ${data.custNo}\n\n`+
     `👨‍✈️ *DRIVER INFO*\n• *Name:* ${data.driverName}\n• *Number:* ${data.driverNo}\n\n`+
     `🚘 *VEHICLE INFO*\n• *Model:* ${data.model}\n• *Vehicle No:* ${data.vehicleNo}\n\n`+
     `🕒 *TIME & DISTANCE*\n• *Start Time:* ${to12Hr(data.start)}\n• *End Time:* ${to12Hr(data.end)}\n`+
     `• *Duration:* ${data.duration} hrs\n• *Extra Hrs:* ${data.extraH}\n• *Total KM:* ${data.totalKM} km\n• *Extra KM:* ${data.extraKM} km\n\n`+
-    `💰 *CHARGES*\n• *Parking:* ₹${data.parking}\n• *Toll:* ₹${data.toll}\n\n`+
-    `📝 *Note:* ${data.note || "-"}`;
+    `💰 *Parking:* ₹${data.parking} • *Toll:* ₹${data.toll}\n\n📝 *Note:* ${data.note||"-"}`;
 
-  window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-
-  let arr = JSON.parse(localStorage.getItem(tripDataKey) || "[]");
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  const arr=load(TRIP_KEY);
   arr.push(data);
-  localStorage.setItem(tripDataKey, JSON.stringify(arr));
-  reserveTripId();
+  save(TRIP_KEY,arr);
+  incSeq();
 }
 
-function showSharedTrips() {
-  let arr = JSON.parse(localStorage.getItem(tripDataKey) || "[]");
-  const div = document.getElementById("sharedTripsList");
-  if (!arr.length) return div.innerHTML = "<p>No trips shared yet.</p>";
-
-  let html = "<table><tr><th>ID</th><th>Date</th><th>Cust</th><th>Driver</th><th>Model</th><th>KM</th></tr>";
-  arr.forEach(r => {
-    html += `<tr><td>${r.id}</td><td>${formatDate(r.date)}</td><td>${r.custName}</td><td>${r.driverName}</td><td>${r.model}</td><td>${r.totalKM}</td></tr>`;
-  });
-  div.innerHTML = html + "</table>";
+function showSharedTrips(){
+  const arr=load(TRIP_KEY);
+  const div=sharedTripsList;
+  if(!arr.length){div.innerHTML="<p>No trips yet.</p>";return;}
+  let html=`<table><tr><th>ID</th><th>Date</th><th>Customer</th><th>Driver</th><th>Vehicle</th><th>Total KM</th></tr>`;
+  arr.forEach(r=>html+=`<tr><td>${r.id}</td><td>${fmtDate(r.date)}</td><td>${r.custName}</td><td>${r.driverName}</td><td>${r.model}</td><td>${r.totalKM}</td></tr>`);
+  div.innerHTML=html+"</table>";
 }
 
-function exportSharedTrips() {
-  const arr = JSON.parse(localStorage.getItem(tripDataKey) || "[]");
-  if (!arr.length) return alert("No data to export.");
-  const ws = XLSX.utils.json_to_sheet(arr);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Trips");
-  XLSX.writeFile(wb, "NST_Trips.xlsx");
+function exportTrips(){
+  const arr=load(TRIP_KEY);
+  if(!arr.length)return alert("No Data");
+  const wb=XLSX.utils.book_new(),
+      ws=XLSX.utils.json_to_sheet(arr);
+  XLSX.utils.book_append_sheet(wb,ws,"Trips");
+  XLSX.writeFile(wb,"NST_Shared_Trips.xlsx");
 }
 
-function loginAdmin() {
-  const u = adminUser.value.trim(), p = adminPass.value.trim();
-  if (u === "admin" && p === "1234") location.href = "admin.html";
+function loginAdmin(){
+  if(adminUser.value==="admin" && adminPass.value==="1234") window.location="admin.html";
   else alert("❌ Invalid credentials");
 }
 
-tripDate.addEventListener("change", () => {
-  const raw = tripDate.value;
-  const d = new Date(raw);
-  tripDateDisplay.value = d.toLocaleDateString("en-GB", {day: '2-digit', month: 'long', year: 'numeric'});
-  tripDateDisplay.dataset.raw = raw;
+tripDate.addEventListener("change",()=>{
+  const raw=tripDate.value;
+  tripDateDisplay.value=new Date(raw).toLocaleDateString("en-GB", {day:'2-digit',month:'long',year:'numeric'});
+  tripDateDisplay.dataset.raw=raw;
 });
 
-// Init on load
-tripId.value = genTripId();
-populateDropdowns();
+tripId.value=genId();
+populate();
 </script>
-
 </body>
 </html>

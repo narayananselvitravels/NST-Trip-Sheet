@@ -87,25 +87,21 @@ function genId() {
   let n = parseInt(localStorage.getItem("trip-seq")||"1");
   return "#NST"+String(n).padStart(3,"0");
 }
-
 function reserveNextId() {
   let c = parseInt(localStorage.getItem("trip-seq")||"1");
   localStorage.setItem("#NST"+String(c).padStart(3,"0"),"used");
   localStorage.setItem("trip-seq",c+1);
   tripId.value = genId();
 }
-
 function formatDate(raw) {
   const d = new Date(raw);
   return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
 }
-
 function to12Hr(t) {
   if (!t) return "";
   const [h,m]=t.split(":"); let d=new Date(); d.setHours(h,m);
   return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'});
 }
-
 function syncDriver(fromName) {
   let data = JSON.parse(localStorage.getItem("driver-master") || "[]");
   if (fromName) {
@@ -116,7 +112,6 @@ function syncDriver(fromName) {
     driverName.value = d ? d.name : "";
   }
 }
-
 function syncVehicle(fromModel) {
   let data = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
   if (fromModel) {
@@ -126,29 +121,28 @@ function syncVehicle(fromModel) {
     const v = data.find(d => d.number === vehicleNo.value);
     vehicleModel.value = v ? v.model : "";
   }
-  recalc();
+  recalc(); // <- ensure recalc on model change
 }
-
 function recalc() {
   let vehicles = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
   const selected = vehicles.find(v => v.model === vehicleModel.value);
-  const freeHrs = selected ? +selected.freeHrs : 8;
-  const freeKm = selected ? +selected.freeKm : 80;
+  const freeHrs = selected && selected.freeHrs ? +selected.freeHrs : 8;
+  const freeKm = selected && selected.freeKm ? +selected.freeKm : 80;
 
   if (startTime.value && endTime.value) {
     let s = new Date(`1970-01-01T${startTime.value}`), e = new Date(`1970-01-01T${endTime.value}`);
     let diff = (e - s) / 3600000; if (diff < 0) diff += 24;
-    duration.value = Math.ceil(diff);
-    extraHours.value = duration.value > freeHrs ? duration.value - freeHrs : 0;
+    const dur = Math.ceil(diff);
+    duration.value = dur;
+    extraHours.value = dur > freeHrs ? dur - freeHrs : 0;
   }
 
   if (startKM.value && endKM.value) {
-    let total = +endKM.value - +startKM.value;
+    const total = +endKM.value - +startKM.value;
     totalKM.value = total;
     extraKM.value = total > freeKm ? total - freeKm : 0;
   }
 }
-
 function shareWhatsApp() {
   const rawDate = tripDateDisplay.dataset.raw;
   if (!rawDate) { alert("Select date first."); return }
@@ -181,7 +175,6 @@ function shareWhatsApp() {
   localStorage.setItem(SHKEY, JSON.stringify(arr));
   reserveNextId();
 }
-
 function showSharedTrips() {
   const arr = JSON.parse(localStorage.getItem(SHKEY)||"[]");
   const div = document.getElementById("sharedTripsList");
@@ -196,7 +189,6 @@ function showSharedTrips() {
   });
   div.innerHTML = html + "</table>";
 }
-
 function exportSharedTrips() {
   const arr = JSON.parse(localStorage.getItem(SHKEY)||"[]");
   if (!arr.length) { alert("No trips to export."); return }
@@ -205,7 +197,6 @@ function exportSharedTrips() {
   XLSX.utils.book_append_sheet(wb, ws, "SharedTrips");
   XLSX.writeFile(wb, "NST_Shared_Trips.xlsx");
 }
-
 function loginAdmin() {
   const user = adminUser.value.trim(), pass = adminPass.value.trim();
   if (user==="admin" && pass==="1234") {
@@ -214,23 +205,19 @@ function loginAdmin() {
     alert("❌ Invalid credentials");
   }
 }
-
 tripDate.addEventListener("change", () => {
   const raw = tripDate.value, d = new Date(raw);
   tripDateDisplay.value = d.toLocaleDateString("en-GB", {day:'2-digit',month:'long',year:'numeric',timeZone:'Asia/Kolkata'});
   tripDateDisplay.dataset.raw = raw;
 });
-
 function populateDropdowns() {
   const drivers = JSON.parse(localStorage.getItem("driver-master") || "[]");
   const vehicles = JSON.parse(localStorage.getItem("vehicle-master") || "[]");
-
   driverName.innerHTML = `<option value="">-- Select --</option>` + drivers.map(d => `<option>${d.name}</option>`).join('');
   driverNumber.innerHTML = `<option value="">-- Select --</option>` + drivers.map(d => `<option>${d.number}</option>`).join('');
   vehicleModel.innerHTML = `<option value="">-- Select --</option>` + vehicles.map(v => `<option>${v.model}</option>`).join('');
   vehicleNo.innerHTML = `<option value="">-- Select --</option>` + vehicles.map(v => `<option>${v.number}</option>`).join('');
 }
-
 populateDropdowns();
 tripId.value = genId();
 </script>

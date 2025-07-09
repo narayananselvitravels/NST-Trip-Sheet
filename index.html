@@ -165,17 +165,40 @@
   }
 
   function shareWhatsApp() {
-    const msg = `📋 *TRIP SUMMARY*\n\n*Trip ID:* ${tripId.value}\n*Date:* ${tripDateDisplay.value}\n\n` +
-    `📍 *Pickup:* ${pickupLocation.value}\n📍 *Drop:* ${dropLocation.value}\n\n` +
-    `👤 *Customer:* ${custName.value} (${custNumber.value})\n` +
-    `🚖 *Driver:* ${driverName.value} (${driverNumber.value})\n` +
-    `🚘 *Vehicle:* ${vehicleModel.value} (${vehicleNo.value})\n\n` +
-    `🕒 *Time:* ${startTime.value} - ${endTime.value} (${duration.value} hrs, Extra ${extraHours.value} hrs)\n` +
-    `📍 *KM:* ${startKM.value} - ${endKM.value} = ${totalKM.value} km (Extra ${extraKM.value} km)\n` +
-    `💰 *Total Amount:* ₹${totalAmount.value} | *Status:* ${paymentStatus.value}\n\n` +
+  const msg = `📋 *TRIP SUMMARY*\n\n` +
+    `*Trip ID:* ${tripId.value}\n` +
+    `*Date:* ${tripDate.value}\n\n` +
+
+    `📍 *Pickup:* ${pickupLocation.value}\n` +
+    `📍 *Drop:* ${dropLocation.value}\n\n` +
+
+    `👤 *Customer Name:* ${custName.value}\n` +
+    `📞 *Customer Number:* ${custNumber.value}\n\n` +
+
+    `👨‍✈️ *Driver Name:* ${driverName.value}\n` +
+    `📞 *Driver Number:* ${driverNumber.value}\n\n` +
+
+    `🚘 *Vehicle Model:* ${vehicleModel.value}\n` +
+    `🔢 *Vehicle Number:* ${vehicleNo.value}\n\n` +
+
+    `🕒 *Start Time:* ${startTime.value || '-'}\n` +
+    `🕓 *End Time:* ${endTime.value || '-'}\n` +
+    `⏳ *Duration:* ${duration.value || '-'} hrs\n` +
+    `⏱ *Extra Hours:* ${extraHours.value || '0'}\n\n` +
+
+    `📏 *Start KM:* ${startKM.value || '0'}\n` +
+    `📏 *End KM:* ${endKM.value || '0'}\n` +
+    `🚕 *Total KM:* ${totalKM.value || '0'} km\n` +
+    `➕ *Extra KM:* ${extraKM.value || '0'} km\n\n` +
+
+    `💰 *Total Amount:* ₹${totalAmount.value || '0'}\n` +
+    `🅿️ *Parking:* ₹${parking.value || '0'}\n` +
+    `🛣 *Toll:* ₹${toll.value || '0'}\n` +
+    `💳 *Payment Status:* ${paymentStatus.value || '-'}\n\n` +
+
     `📝 *Note:* ${note.value || '-'}`;
-    window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
-  }
+
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), '_blank');
 
   function showSharedTrips() {
     const arr = JSON.parse(localStorage.getItem(SHKEY) || "[]");
